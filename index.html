@@ -250,7 +250,9 @@ const growth=lote=>{const rs=live().filter(r=>r.lote===lote&&r.pre!=null).sort((
 const sortNat=(a,b)=>String(a).localeCompare(String(b),'es',{numeric:true});
 
 /* ---------- sincronización con la planilla (Google Sheets) ---------- */
+const API_DEF={url:'https://script.google.com/macros/s/AKfycbwnsp3goXE9-RBJNMTRT8kRr9CPeKw3mZ_auImtTA5M0HiRPMLXLOGfpnJFyk6ttgzh/exec',k:'tubicha-a5e4a23a'};
 let API={url:'',k:''};try{API=Object.assign(API,JSON.parse(localStorage.getItem(KEY+'.api')||'{}'))}catch(e){}
+if(!API.url){API={...API_DEF}}
 try{const q=new URLSearchParams(location.search);if(q.get('u')&&q.get('k')){API={url:q.get('u'),k:q.get('k')};localStorage.setItem(KEY+'.api',JSON.stringify(API));history.replaceState(null,'',location.pathname)}}catch(e){}
 let online=navigator.onLine,syncing=false,lastSync=0,syncErr='';
 const npend=()=>S.pend.length+(S.pendCfg?1:0)+(S.pendTasas?1:0)+S.pendOf.length;
