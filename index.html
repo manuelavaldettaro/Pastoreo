@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pastoreo Tubicha Mini</title>
+<meta name="theme-color" content="#1d5a35">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pastoreo">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: herramienta de campo, clara y robusta, para usar parado en el lote con el sol encima
+   IDEA: la libreta de recorrida del pasturómetro, pasada a botones grandes
+   PICTURE: la tarjeta de resultado en vivo (kg MS/vaca) es el centro de la carga
+   COLOUR and TYPE: verde pastura dominante, blanco, acento amarillo heno; Barlow / Barlow Semi Condensed para cifras
+   LAYOUT: una columna, barra de pestañas fija abajo, tarjetas por rodeo */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0e1711);--ink:light-dark(#14221a,#e6eee8);--mut:light-dark(#5b6b61,#9bb0a3);--line:light-dark(#dfe6e0,#24352b);--card:light-dark(#f3f6f2,#152219);--g:#1d5a35;--g2:light-dark(#2f7d4b,#5fbf82);--hay:#f2c230;--bad:light-dark(#b3261e,#ff8a80)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif;overflow-x:clip;padding-bottom:84px}
+header{background:var(--g);color:#fff;padding:calc(14px + env(safe-area-inset-top)) max(4vw,16px) 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font:700 24px/1.1 'Barlow Semi Condensed',sans-serif}
+.pill{font-size:13px;padding:5px 11px;border-radius:99px;background:rgba(255,255,255,.16);white-space:nowrap}
+.pill.warn{background:var(--hay);color:#2a2200}
+main{max-width:760px;margin:0 auto;padding:16px max(4vw,14px)}
+section[hidden]{display:none}
+h2{font:700 22px/1.15 'Barlow Semi Condensed',sans-serif;margin:8px 0 12px}
+h3{font:600 17px/1.2 Barlow,sans-serif;margin:18px 0 8px}
+label{display:block;font-size:14px;color:var(--mut);margin-bottom:4px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;min-height:46px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid var(--hay);outline-offset:1px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.full{grid-column:1/-1}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chips button{flex:1 1 70px;background:var(--bg)}.chips button.on{background:var(--g);border-color:var(--g);color:#fff}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:0;border-radius:0;background:transparent;color:var(--ink);min-height:44px}
+.seg button.on{background:var(--g);color:#fff}
+button{font:600 16px Barlow,sans-serif;min-height:44px;padding:10px 16px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.pri{background:var(--g);border-color:var(--g);color:#fff;width:100%;font-size:18px;min-height:54px}
+button.sm{min-height:36px;padding:6px 12px;font-size:14px}
+button.danger{color:var(--bad)}
+.res{background:var(--g);color:#fff;border-radius:16px;padding:18px;margin:16px 0;display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px;align-items:end}
+.res .big{font:700 clamp(40px,11vw,60px)/1 'Barlow Semi Condensed',sans-serif}
+.res .n{font:700 26px/1 'Barlow Semi Condensed',sans-serif}
+.res small{display:block;font-size:13px;opacity:.85;margin-top:4px}
+.hint{font-size:14px;color:var(--mut);margin:6px 0 0}
+.warnmsg{color:var(--bad);font-size:14px;margin:6px 0 0}
+.card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:14px}
+.card .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .tot{font:700 34px/1 'Barlow Semi Condensed',sans-serif;color:var(--g2)}
+.delta{font-size:14px;color:var(--mut)}
+.up{color:var(--g2)}.dn{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-size:12px;color:var(--mut);font-weight:600;white-space:normal}
+th:first-child,td:first-child{text-align:left}
+.scroll{overflow-x:auto}
+.tasa{width:90px;min-height:40px;padding:6px 8px;text-align:right}.usar{min-height:34px;padding:4px 10px;font-size:14px}
+.tag{display:inline-block;font-size:12px;background:var(--hay);color:#2a2200;border-radius:6px;padding:1px 7px;margin-left:6px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:5}
+nav button{flex:1;border:0;background:transparent;font-size:12px;color:var(--mut);min-height:52px;padding:4px}
+nav button.on{color:var(--g2);box-shadow:inset 0 3px 0 var(--g2);border-radius:0}
+.fig{position:relative;min-height:260px;margin-bottom:6px}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;margin-bottom:14px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.prc{border-top:1px solid var(--line);padding:10px 0}.prc1{display:flex;justify-content:space-between;gap:8px;font-weight:600}.prc1 b{font:700 22px/1 'Barlow Semi Condensed',sans-serif;white-space:nowrap}.prc1 small{font:500 13px Barlow,sans-serif;color:var(--mut)}.prc2{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--mut);margin-top:4px}
+.sumt{border-collapse:separate;border-spacing:0;font-size:14px}.sumt th,.sumt td{padding:7px 8px}.sumt th{background:var(--card);vertical-align:bottom}
+.sumt td:first-child,.sumt th:first-child{position:sticky;left:0;background:var(--bg);z-index:1;font-weight:700}.sumt th:first-child{background:var(--card)}
+.sumt .tc{font:700 20px/1 'Barlow Semi Condensed',sans-serif;color:var(--g2);vertical-align:middle;text-align:center}
+.sumt tr.r0 td{border-top:2px solid var(--line)}.ef{border-radius:6px;padding:2px 6px}
+.chiprow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.chiprow .card{margin:0}.chiprow .tot{font-size:30px}
+.empty{color:var(--mut);padding:18px;text-align:center;border:1.5px dashed var(--line);border-radius:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.lrow{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.3fr) minmax(0,.8fr) minmax(0,.9fr) 34px;gap:6px;margin-bottom:6px}
+.lrow input{min-height:42px;padding:8px}
+.orow{display:grid;grid-template-columns:minmax(0,1.4fr) 100px 40px;gap:6px;margin-bottom:6px}
+.x{min-height:42px;padding:0;border:0;background:transparent;color:var(--bad);font-size:22px}
+@media(max-width:520px){.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.res{grid-template-columns:1fr 1fr}.res>div:first-child{grid-column:1/-1}table{font-size:13px}}
+@media(prefers-reduced-motion:no-preference){.res .big{transition:color .2s}}
+</style>
+</head>
+<body>
+<header><h1>Pastoreo Tubicha Mini</h1><span class="pill" id="st">Cargando…</span></header>
+<main>
+
+<section id="v-cargar">
+  <h2 id="ftitle">Cargar parcela</h2>
+  <div class="grid">
+    <div><label for="f-fecha">Fecha</label><input type="date" id="f-fecha"></div>
+    <div><label>Turno</label><div class="seg" id="f-turno"><button type="button" data-v="Mañana" class="on">Mañana</button><button type="button" data-v="Tarde">Tarde</button></div></div>
+    <div><label for="f-rodeo">Rodeo</label><input id="f-rodeo" list="dl-rodeos" inputmode="text" placeholder="Ej: 4"></div>
+    <div><label for="f-vacas">Número de animales</label><input id="f-vacas" type="number" inputmode="numeric"></div>
+    <div class="full"><label for="f-lote">Lote</label><select id="f-lote"></select><p class="hint" id="f-loteinfo"></p></div>
+    <div class="full"><label>¿Cómo se midió el ancho?</label><div class="seg" id="f-met"><button type="button" data-v="pasos" class="on">En pasos</button><button type="button" data-v="metros">En metros</button></div></div>
+    <div class="full" id="w-op"><label>¿Quién caminó?</label><div class="chips" id="f-ops"></div></div>
+    <div id="w-otro" class="full" hidden><label for="f-opnom">Nombre de quien caminó</label><input id="f-opnom" type="text"></div>
+    <div id="w-pasos"><label for="f-pasos" id="l-pasos">Ancho en pasos</label><input id="f-pasos" type="text" inputmode="decimal"></div>
+    <div id="w-paso"><label for="f-paso">Largo del paso (m)</label><input id="f-paso" type="text" inputmode="decimal"></div>
+    <div><label for="f-largo">Largo parcela (m)</label><input id="f-largo" type="text" inputmode="decimal"></div>
+    <div><label>Ancho · superficie</label><div id="f-anc" style="padding:10px 0;font-weight:600">—</div></div>
+    <div><label for="f-pre">Disponib. inicial (kg MS/ha)</label><input id="f-pre" type="text" inputmode="decimal"></div>
+    <div><label for="f-post">Disponib. final (kg MS/ha)</label><input id="f-post" type="text" inputmode="decimal"></div>
+  </div>
+  <div class="res" aria-live="polite">
+    <div><span class="big" id="r-cv">—</span><small>kg MS por vaca en esta parcela</small></div>
+    <div><span class="n" id="r-ef">—</span><small>eficiencia de cosecha</small></div>
+    <div><span class="n" id="r-dia">—</span><small id="r-dial">total del rodeo hoy</small></div>
+  </div>
+  <p class="warnmsg" id="f-warn"></p>
+  <button class="pri" id="f-save">Guardar</button>
+  <div class="row" style="margin-top:10px"><button id="f-cancel" hidden>Cancelar edición</button></div>
+</section>
+
+<section id="v-rec" hidden>
+  <div class="row" style="justify-content:space-between"><h2>Resumen de recorrida</h2><select id="r-fecha" style="width:auto"></select></div>
+  <div id="r-sum"></div>
+  <h3 id="r-dh">Detalle y edición</h3>
+  <div id="r-list"></div>
+</section>
+
+<section id="v-graf" hidden>
+  <h2>Evolución</h2>
+  <h3>Consumo por rodeo (kg MS/vaca/día)</h3>
+  <div class="fig" id="g-rodeo"></div><div class="legend" id="lg-rodeo"></div>
+  <div class="row"><label for="g-lote" style="margin:0">Lote</label><select id="g-lote" style="width:auto;flex:1"></select></div>
+  <h3>Forraje cosechado por pastoreo (kg MS/ha)</h3>
+  <div class="fig" id="g-cons"></div>
+  <h3>Tasa de crecimiento (kg MS/ha/día)</h3>
+  <div class="fig" id="g-crec"></div>
+  <p class="hint">Crecimiento estimado = disponibilidad inicial de este pastoreo − disponibilidad final del pastoreo anterior del mismo lote, dividido los días entre ambos (entre 7 y 60 días).</p>
+  <h3>Resumen por lote</h3>
+  <div class="scroll"><table id="t-lotes"></table></div>
+</section>
+
+<section id="v-of" hidden>
+  <h2>Oferta forrajera</h2>
+  <div class="res" aria-live="polite">
+    <div><span class="big" id="o-of">—</span><small>kg MS/día de oferta estimada</small></div>
+    <div><span class="n" id="o-co">—</span><small id="o-col">kg MS/día consumidos (medido)</small></div>
+    <div><span class="n" id="o-ba">—</span><small id="o-bal">balance</small></div>
+  </div>
+  <div class="row"><label for="o-fecha" style="margin:0">Comparar con la recorrida del</label><select id="o-fecha" style="width:auto;flex:1"></select></div>
+  <p class="hint" id="o-note"></p>
+  <h3>Por recurso</h3>
+  <div class="scroll"><table id="o-tab"></table></div>
+  <p class="hint">Tasa medida: promedio de las tasas de crecimiento de los lotes de ese recurso en los últimos 60 días. Tocá el valor para usarlo como estimada.</p>
+  <div class="row" style="margin-top:10px"><button class="pri" id="o-save" style="width:auto;flex:1">Guardar oferta de hoy</button></div>
+  <p class="hint" id="o-msg"></p>
+  <h3>Oferta vs. consumo (kg MS/día)</h3>
+  <div class="fig" id="g-of"></div>
+  <div class="legend"><span><i style="background:#1f7a43"></i>Oferta estimada</span><span><i style="background:#d08a00"></i>Consumo medido</span></div>
+  <h3>Historial</h3>
+  <div class="scroll"><table id="o-hist"></table></div>
+</section>
+
+<section id="v-prod" hidden>
+  <h2>Producción de pasto</h2>
+  <div class="grid">
+    <div><label for="p-desde">Desde</label><input type="date" id="p-desde"></div>
+    <div><label for="p-hasta">Hasta</label><input type="date" id="p-hasta"></div>
+    <div class="full"><label for="p-gap">Mediciones del mismo lote separadas por menos de estos días cuentan como un mismo pastoreo</label><input id="p-gap" type="number" inputmode="numeric" value="14" style="max-width:120px"></div>
+  </div>
+  <div class="res" aria-live="polite">
+    <div><span class="big" id="p-tot">—</span><small>t MS cosechadas en el campo</small></div>
+    <div><span class="n" id="p-ha">—</span><small>kg MS/ha promedio</small></div>
+    <div><span class="n" id="p-dia">—</span><small id="p-dial">kg MS/día</small></div>
+  </div>
+  <p class="hint" id="p-cov"></p>
+  <h3>Por recurso</h3>
+  <div class="scroll"><table id="p-rec"></table></div>
+  <h3>Por mes (t MS cosechadas)</h3>
+  <div class="fig" id="g-prod"></div>
+  <h3>Por lote</h3>
+  <div class="scroll"><table id="p-lot"></table></div>
+  <details style="margin-top:12px"><summary>Cómo se calcula</summary>
+  <p class="hint">Cada medición es una franja del lote. Se supone que todo el lote se come igual que la franja medida: kg MS cosechados = (disp. inicial − final) × superficie del lote. Las mediciones del mismo lote cercanas en el tiempo (según los días de arriba) son el mismo pastoreo y se promedian. Los lotes sin mediciones válidas se estiman con el promedio kg MS/ha de su recurso y se marcan con *. Las parcelas sin disponibilidad final no se usan.</p></details>
+</section>
+
+<section id="v-base" hidden>
+  <h2>Lotes y operarios</h2>
+  <h3>Lotes</h3>
+  <div class="lrow" style="font-size:12px;color:var(--mut)"><span>Lote</span><span>Recurso</span><span>Sup. (ha)</span><span>Largo (m)</span><span></span></div>
+  <div id="b-lotes"></div>
+  <div class="row"><button class="sm" id="b-addl">+ Agregar lote</button></div>
+  <details style="margin-top:10px"><summary>Pegar lotes desde Excel</summary>
+    <p class="hint">Copiá las columnas Lote, Recurso, Sup y Largo de la planilla (con encabezados) y pegalas acá. Los lotes que ya existen se actualizan.</p>
+    <textarea id="b-paste" rows="5"></textarea><button class="sm" id="b-pastego" style="margin-top:6px">Cargar lotes</button></details>
+  <h3>Operarios y largo del paso</h3>
+  <div class="orow" style="font-size:12px;color:var(--mut)"><span>Nombre</span><span>Paso (m)</span><span></span></div>
+  <div id="b-ops"></div>
+  <div class="row"><button class="sm" id="b-addo">+ Agregar operario</button></div>
+  <div class="row" style="margin-top:12px"><button class="pri" id="b-save" style="width:auto">Guardar cambios</button><span class="hint" id="b-msg"></span></div>
+  <h3>Conexión con la planilla</h3>
+  <div class="grid">
+    <div class="full"><label for="c-url">Dirección del script (termina en /exec)</label><input id="c-url" type="url" autocomplete="off"></div>
+    <div><label for="c-k">Clave</label><input id="c-k" type="text" autocomplete="off"></div>
+    <div style="align-self:end"><button class="sm" id="c-save" style="width:100%">Guardar y probar</button></div>
+  </div>
+  <p class="hint" id="c-msg"></p>
+  <div class="row"><button class="sm" id="c-link">Copiar link para operarios</button><button class="sm" id="c-sync">Sincronizar ahora</button></div>
+  <p class="hint">El link abre la app ya conectada: mandalo por WhatsApp a cada operario y que la instale desde ahí.</p>
+  <h3>Base de datos</h3>
+  <p class="hint" id="d-info"></p>
+  <div class="row"><button class="sm" id="d-copy">Copiar todo (para Excel)</button><span class="hint" id="d-msg"></span></div>
+</section>
+
+</main>
+<nav>
+  <button data-t="cargar" class="on">Cargar</button><button data-t="rec">Resumen</button><button data-t="graf">Gráficos</button><button data-t="of">Oferta</button><button data-t="prod">Producción</button><button data-t="base">Lotes</button>
+</nav>
+<datalist id="dl-rodeos"></datalist><datalist id="dl-rec"></datalist>
+
+<script>
+{
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>{const n=parseFloat(String(v??'').trim().replace(',','.'));return isFinite(n)?n:null};
+const f1=(n,d=1)=>n==null||!isFinite(n)?'—':n.toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const f0=n=>f1(n,0);
+const pct=n=>n==null||!isFinite(n)?'—':Math.round(n*100)+'%';
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const dms=s=>Date.parse(s+'T12:00:00');
+const dlabel=s=>s?s.slice(8,10)+'/'+s.slice(5,7):'';
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const PAL=['#1f7a43','#d08a00','#2f6fb0','#b23a48','#6b4fa0','#2a8c8c','#8a6d1f','#6d7a72'];
+const KEY='pastoreo.v1';
+
+/* ---------- estado local ---------- */
+let S={recs:{},lotes:[],ops:[],cfgUpd:0,pend:[],pendCfg:false,tasas:{},tasasUpd:0,pendTasas:false,ofertas:{},pendOf:[]};
+try{const raw=localStorage.getItem(KEY);if(raw)S=Object.assign(S,JSON.parse(raw))}catch(e){}
+S.tasas=S.tasas||{};S.ofertas=S.ofertas||{};S.pendOf=S.pendOf||[];
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const live=()=>Object.values(S.recs).filter(r=>!r.del);
+
+/* ---------- cálculos ---------- */
+const calc=r=>{const ch=(r.pre!=null&&r.post!=null&&r.post<=r.pre)?r.pre-r.post:null;
+  return{ch,cv:ch!=null&&r.ha&&r.vacas?ch*r.ha/r.vacas:null,ef:ch!=null&&r.pre?ch/r.pre:null}};
+const dayTotal=(fecha,rodeo,excl)=>live().filter(r=>r.fecha===fecha&&r.rodeo===rodeo&&r.id!==excl).reduce((a,r)=>a+(calc(r).cv||0),0);
+const rodeoDays=rodeo=>{const m={};live().filter(r=>r.rodeo===rodeo).forEach(r=>{m[r.fecha]=(m[r.fecha]||0)+(calc(r).cv||0)});return Object.entries(m).sort((a,b)=>a[0]<b[0]?-1:1)};
+const growth=lote=>{const rs=live().filter(r=>r.lote===lote&&r.pre!=null).sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:(a.turno<b.turno?-1:1));const out=[];
+  for(let i=1;i<rs.length;i++){const p=rs[i-1];if(p.post==null||p.post>p.pre)continue;const d=(dms(rs[i].fecha)-dms(p.fecha))/864e5;if(d>=7&&d<=60)out.push({x:dms(rs[i].fecha),y:(rs[i].pre-p.post)/d,f:rs[i].fecha})}return out};
+const sortNat=(a,b)=>String(a).localeCompare(String(b),'es',{numeric:true});
+
+/* ---------- sincronización con la planilla (Google Sheets) ---------- */
+let API={url:'',k:''};try{API=Object.assign(API,JSON.parse(localStorage.getItem(KEY+'.api')||'{}'))}catch(e){}
+try{const q=new URLSearchParams(location.search);if(q.get('u')&&q.get('k')){API={url:q.get('u'),k:q.get('k')};localStorage.setItem(KEY+'.api',JSON.stringify(API));history.replaceState(null,'',location.pathname)}}catch(e){}
+let online=navigator.onLine,syncing=false,lastSync=0,syncErr='';
+const npend=()=>S.pend.length+(S.pendCfg?1:0)+(S.pendTasas?1:0)+S.pendOf.length;
+const status=()=>{const st=$('#st'),n=npend();st.classList.remove('warn');
+  if(!API.url){st.textContent='Sin conexión a la planilla';st.classList.add('warn');return}
+  if(!online){st.textContent=n?`Sin señal · ${n} por subir`:'Sin señal · datos guardados';st.classList.add('warn');return}
+  if(syncing){st.textContent='Sincronizando…';return}
+  if(syncErr){st.textContent=n?`${syncErr} · ${n} por subir`:syncErr;st.classList.add('warn');return}
+  st.textContent=n?`${n} por subir`:(lastSync?'Sincronizado '+new Date(lastSync).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}):'Conectado')};
+function applyServer(d,sent){
+  const recs={};(d.registros||[]).forEach(r=>{if(r&&r.id)recs[r.id]=r});
+  S.pend.forEach(id=>{if(S.recs[id])recs[id]=S.recs[id]});S.recs=recs;
+  if(!S.pendCfg&&Array.isArray(d.lotes)){S.lotes=d.lotes;S.ops=Array.isArray(d.ops)?d.ops:S.ops}
+  if(!S.pendTasas&&d.tasas&&d.tasas.tasas){S.tasas=d.tasas.tasas;S.tasasUpd=d.tasas.upd||0}
+  if(Array.isArray(d.ofertas)){const of={};d.ofertas.forEach(o=>{if(o&&o.fecha)of[o.fecha]=o});S.pendOf.forEach(f=>{if(S.ofertas[f])of[f]=S.ofertas[f]});S.ofertas=of}
+  persist();renderAll()}
+async function sync(){if(!API.url||!navigator.onLine||syncing)return;online=true;syncing=true;syncErr='';status();
+  const sent={pend:[...S.pend],cfg:S.pendCfg,tasas:S.pendTasas,of:[...S.pendOf]};
+  try{let res;
+    if(npend()){const body={k:API.k,registros:sent.pend.map(id=>S.recs[id]).filter(Boolean)};
+      if(sent.cfg)body.base={lotes:S.lotes,ops:S.ops};if(sent.tasas)body.tasas={tasas:S.tasas,upd:S.tasasUpd};
+      if(sent.of.length)body.ofertas=sent.of.map(f=>S.ofertas[f]).filter(Boolean);
+      res=await fetch(API.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})}
+    else res=await fetch(API.url+(API.url.includes('?')?'&':'?')+'k='+encodeURIComponent(API.k)+'&t='+Date.now());
+    const d=await res.json();
+    if(d.error){syncErr=d.error==='clave'?'Clave incorrecta':'Error de la planilla';throw 0}
+    if(sent.pend.length||sent.cfg||sent.tasas||sent.of.length){
+      S.pend=S.pend.filter(id=>!sent.pend.includes(id)||S.recs[id]?.upd>(d.registros||[]).find(r=>r.id===id)?.upd);
+      if(sent.cfg&&S.pendCfg===sent.cfg)S.pendCfg=false;if(sent.tasas)S.pendTasas=false;S.pendOf=S.pendOf.filter(f=>!sent.of.includes(f))}
+    lastSync=Date.now();applyServer(d);
+  }catch(e){if(!syncErr)syncErr='No se pudo sincronizar'}
+  syncing=false;status()}
+const flush=()=>{status();clearTimeout(flush.t);flush.t=setTimeout(sync,800)};
+addEventListener('online',()=>{online=true;sync()});addEventListener('offline',()=>{online=false;status()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
+setInterval(()=>{if(!document.hidden)sync()},120000);
+setTimeout(sync,300);
+
+/* ---------- pestañas ---------- */
+let tab='cargar';
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+function show(t){tab=t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  ['cargar','rec','graf','of','prod','base'].forEach(x=>$('#v-'+x).hidden=x!==t);scrollTo(0,0);
+  if(t==='rec')renderRec();if(t==='graf')renderGraf();if(t==='of')renderOf();if(t==='prod')renderProd();if(t==='base')renderBase()}
+
+/* ---------- formulario ---------- */
+let turno='Mañana',editing=null,largoTouched=false;
+const F=id=>$('#f-'+id);
+F('fecha').value=today();
+document.querySelectorAll('#f-turno button').forEach(b=>b.onclick=()=>{turno=b.dataset.v;setTurno();renderForm()});
+const setTurno=()=>document.querySelectorAll('#f-turno button').forEach(b=>b.classList.toggle('on',b.dataset.v===turno));
+const DEF_OPS=[{id:'emi',nombre:'Emi',paso:0.714},{id:'zule',nombre:'Zule',paso:0.66},{id:'manu',nombre:'Manu',paso:0.789},{id:'sami',nombre:'Sami',paso:0.66}];
+const opsList=()=>S.ops.length?S.ops:DEF_OPS;
+let metodo='pasos',opSel='';try{metodo=localStorage.getItem(KEY+'.met')||'pasos';opSel=localStorage.getItem(KEY+'.op')||''}catch(e){}
+const remember=()=>{try{localStorage.setItem(KEY+'.met',metodo);localStorage.setItem(KEY+'.op',opSel)}catch(e){}};
+const opObj=()=>opsList().find(o=>o.id===opSel);
+const pasoTxt=o=>o&&o.paso!=null?String(o.paso).replace('.',','):'';
+function fillSelects(){
+  const lv=F('lote').value;
+  F('lote').innerHTML='<option value="">Elegí el lote…</option>'+[...S.lotes].sort((a,b)=>sortNat(a.nombre,b.nombre)).map(l=>`<option value="${esc(l.nombre)}">${esc(l.nombre)}${l.recurso?' · '+esc(l.recurso):''}</option>`).join('');
+  if(lv)F('lote').value=lv;
+  if(opSel!=='otro'&&!opObj())opSel='';
+  F('ops').innerHTML=opsList().map(o=>`<button type="button" data-op="${esc(o.id)}">${esc(o.nombre)}</button>`).join('')+(opSel==='otro'?'<button type="button" data-op="otro">Otro</button>':'');
+  if(opSel&&opSel!=='otro'&&!editing)F('paso').value=pasoTxt(opObj());
+  setMet();
+  const rodeos=[...new Set(live().map(r=>r.rodeo))].sort(sortNat);
+  $('#dl-rodeos').innerHTML=rodeos.map(r=>`<option value="${esc(r)}">`).join('')}
+function setMet(){document.querySelectorAll('#f-met button').forEach(b=>b.classList.toggle('on',b.dataset.v===metodo));
+  const p=metodo==='pasos';$('#w-op').hidden=!p;$('#w-paso').hidden=!p||!opSel;$('#w-otro').hidden=!p||opSel!=='otro';
+  document.querySelectorAll('#f-ops button').forEach(b=>b.classList.toggle('on',b.dataset.op===opSel));
+  $('#l-pasos').textContent=p?'Ancho en pasos':'Ancho (m)';$('#w-pasos').classList.toggle('full',!p||!opSel)}
+document.querySelectorAll('#f-met button').forEach(b=>b.onclick=()=>{metodo=b.dataset.v;remember();setMet();renderForm()});
+F('ops').onclick=e=>{const b=e.target.closest('button');if(!b)return;opSel=b.dataset.op;remember();
+  F('paso').value=opSel==='otro'?'':pasoTxt(opObj());if(opSel==='otro')F('opnom').value='';setMet();renderForm();(opSel==='otro'?F('opnom'):F('pasos')).focus()};
+const loteObj=n=>S.lotes.find(l=>l.nombre===n);
+function formRec(){const p=metodo==='pasos';const v=num(F('pasos').value),largo=num(F('largo').value);
+  const paso=p?num(F('paso').value):null;const ancho=p?(v!=null&&paso!=null?v*paso:null):v;
+  const lo=loteObj(F('lote').value);const operario=p?(opSel==='otro'?(F('opnom').value.trim()||'Otro'):(opObj()?.nombre||'')):'';
+  return{fecha:F('fecha').value,turno,rodeo:F('rodeo').value.trim(),vacas:num(F('vacas').value),lote:F('lote').value,recurso:lo?.recurso||'',
+    metodo,largo,pasos:p?v:null,operario,paso,ancho,ha:largo!=null&&ancho!=null?largo*ancho/1e4:null,pre:num(F('pre').value),post:num(F('post').value)}}
+function renderForm(){const r=formRec(),c=calc(r);
+  const lo=loteObj(r.lote);$('#f-loteinfo').innerHTML=lo?`Largo cargado: ${lo.largo!=null?f0(lo.largo)+' m':'sin dato'}${lo.recurso?`<span class="tag">${esc(lo.recurso)}</span>`:''}`:(S.lotes.length?'':'Todavía no hay lotes cargados: agregalos en la pestaña Lotes.');
+  $('#f-anc').textContent=r.ancho!=null?`${f1(r.ancho)} m · ${f1(r.ha,2)} ha`:'—';
+  $('#r-cv').textContent=f1(c.cv);$('#r-ef').textContent=pct(c.ef);
+  const tot=r.rodeo&&r.fecha?dayTotal(r.fecha,r.rodeo,editing)+(c.cv||0):null;
+  $('#r-dia').textContent=tot?f1(tot):'—';$('#r-dial').textContent=r.rodeo?`total rodeo ${r.rodeo} en el día (kg MS/vaca)`:'total del rodeo en el día';
+  let w='';if(r.pre!=null&&r.post==null&&!$('#f-post').value)w='Sin disponibilidad final: se puede guardar y completarla después con Editar.';if(metodo==='pasos'&&!opSel)w='Elegí quién caminó la parcela.';
+  else if(metodo==='pasos'&&r.paso==null)w=`Falta el largo del paso de ${r.operario||'quien midió'}: escribilo acá o cargalo en la pestaña Lotes.`;
+  else if(r.pre!=null&&r.post!=null&&r.post>r.pre)w='La disponibilidad final es mayor que la inicial: revisá los datos.';
+  else if(c.ef!=null&&c.ef>0.9)w='Eficiencia mayor a 90%: revisá los datos.';$('#f-warn').textContent=w}
+['fecha','rodeo','vacas','pasos','pre','post','paso','opnom'].forEach(k=>F(k).addEventListener('input',renderForm));
+F('largo').addEventListener('input',()=>{largoTouched=true;renderForm()});
+F('lote').addEventListener('change',()=>{const lo=loteObj(F('lote').value);F('largo').value=lo&&lo.largo!=null?String(lo.largo).replace('.',','):'';largoTouched=false;renderForm()});
+F('rodeo').addEventListener('change',()=>{const rod=F('rodeo').value.trim();if(editing||!rod)return;
+  const last=live().filter(r=>r.rodeo===rod).sort((a,b)=>a.fecha<b.fecha?1:-1)[0];if(last&&!F('vacas').value)F('vacas').value=last.vacas;
+  if(live().some(r=>r.rodeo===rod&&r.fecha===F('fecha').value&&r.turno==='Mañana')){turno='Tarde';setTurno()}renderForm()});
+F('save').onclick=()=>{const r=formRec();const miss=[];
+  if(!r.fecha)miss.push('fecha');if(!r.rodeo)miss.push('rodeo');if(!r.lote)miss.push('lote');if(!r.vacas)miss.push('animales');if(metodo==='pasos'&&!opSel)miss.push('quién caminó');if(metodo==='pasos'&&r.paso==null)miss.push('largo del paso');if(r.ha==null)miss.push('largo y ancho');if(r.pre==null)miss.push('disponibilidad inicial');
+  if(miss.length){$('#f-warn').textContent='Falta completar: '+miss.join(', ')+'.';return}
+  const id=editing||uid();S.recs[id]=Object.assign(r,{id,upd:Date.now(),del:false});if(!S.pend.includes(id))S.pend.push(id);persist();
+  const keep={fecha:r.fecha,rodeo:r.rodeo,vacas:r.vacas};clearForm();
+  F('fecha').value=keep.fecha;
+  editing=null;$('#f-save').textContent='Guardado ✓';setTimeout(()=>$('#f-save').textContent='Guardar',1500);
+  fillSelects();if(opSel&&opSel!=='otro')F('paso').value=pasoTxt(opObj());renderForm();flush()};
+function clearForm(){['rodeo','vacas','pasos','largo','pre','post'].forEach(k=>F(k).value='');F('lote').value='';editing=null;turno='Mañana';setTurno();
+  $('#ftitle').textContent='Cargar parcela';$('#f-cancel').hidden=true;$('#f-warn').textContent=''}
+$('#f-cancel').onclick=()=>{clearForm();renderForm()};
+function edit(id){const r=S.recs[id];if(!r)return;show('cargar');editing=id;
+  F('fecha').value=r.fecha;turno=r.turno;setTurno();F('rodeo').value=r.rodeo;F('vacas').value=r.vacas;
+  if(!loteObj(r.lote)&&r.lote){F('lote').insertAdjacentHTML('beforeend',`<option value="${esc(r.lote)}">${esc(r.lote)}</option>`)}F('lote').value=r.lote;
+  const op=opsList().find(o=>o.nombre===r.operario);const cm=v=>v==null?'':String(+(+v).toFixed(2)).replace('.',',');
+  if(r.pasos!=null){metodo='pasos';opSel=op?op.id:'otro';F('opnom').value=op?'':r.operario;F('paso').value=cm(r.paso);F('pasos').value=cm(r.pasos)}else{metodo='metros';F('pasos').value=cm(r.ancho)}
+  setMet();
+  F('largo').value=r.largo!=null?String(r.largo).replace('.',','):'';F('pre').value=r.pre??'';F('post').value=r.post??'';
+  $('#ftitle').textContent='Editar parcela';$('#f-cancel').hidden=false;renderForm()}
+
+/* ---------- recorrida ---------- */
+let armed=null;
+const efBg=e=>e==null?'':e<0.5?'background:rgba(214,69,65,.22)':e<0.7?'background:rgba(242,194,48,.35)':'background:rgba(47,125,75,.25)';
+const prevOf=(rod,f)=>{const days=rodeoDays(rod);const i=days.findIndex(d=>d[0]===f);return i>0?days[i-1]:null};
+let sumText='';
+function renderSum(f,rs,rodeos){
+  const body=rodeos.map(rod=>{const rows=rs.filter(r=>r.rodeo===rod).sort((a,b)=>a.turno<b.turno?-1:1);const tot=rows.reduce((a,r)=>a+(calc(r).cv||0),0);
+    return rows.map((r,i)=>{const c=calc(r);return `<tr class="${i===0?'r0':''}"><td>${i===0?esc(rod):''}</td><td style="text-align:left">${esc(r.turno==='Mañana'?'M':'T')} · ${esc(r.lote)}</td><td>${f0(r.vacas)}</td><td>${f1(r.ha,2)}</td><td>${f0(r.largo)}</td><td>${f1(r.ancho)}</td><td>${f0(r.pre)}</td><td>${r.post==null?'<span class="dn">falta</span>':f0(r.post)}</td><td><span class="ef" style="${efBg(c.ef)}">${pct(c.ef)}</span></td><td><b>${f1(c.cv)}</b></td>${i===0?`<td class="tc" rowspan="${rows.length}">${f1(tot)}</td>`:''}</tr>`}).join('')}).join('');
+  const cards=rodeos.map(rod=>{const tot=rs.filter(r=>r.rodeo===rod).reduce((a,r)=>a+(calc(r).cv||0),0);const prev=prevOf(rod,f);
+    const d=prev?tot-prev[1]:null;const inc=rs.some(r=>r.rodeo===rod&&calc(r).cv==null);return `<div class="card"><div class="delta">Rodeo ${esc(rod)}</div><div class="tot">${f1(tot)}</div>${inc?'<div class="delta dn">incompleto: falta una disp. final</div>':''}<div class="delta">kg MS/vaca/día</div><div class="delta">${prev?`Anterior ${esc(dlabel(prev[0]))}: ${f1(prev[1])} <span class="${d>=0?'up':'dn'}">(${d>=0?'+':''}${f1(d)})</span>`:'Primera medición'}</div></div>`}).join('');
+  $('#r-sum').innerHTML=`<p class="hint" style="margin-top:0">${rs.length} parcelas cargadas · ${rodeos.length} rodeos</p><div class="chiprow">${cards}</div>
+    <div class="scroll"><table class="sumt"><thead><tr><th>Rodeo</th><th style="text-align:left">Turno · lote</th><th>Animales</th><th>Sup. (ha)</th><th>Largo (m)</th><th>Ancho (m)</th><th>Disp. inicial (kg MS/ha)</th><th>Disp. final (kg MS/ha)</th><th>Efic. cosecha</th><th>Consumo (kg MS/vaca)</th><th>Consumo total</th></tr></thead><tbody>${body}</tbody></table></div>
+    <div class="row" style="margin-top:12px"><button class="sm" id="r-copy">Copiar resumen para WhatsApp</button><span class="hint" id="r-cmsg"></span></div>`;
+  sumText=`Recorrida ${dlabel(f)}/${f.slice(0,4)}\n`+rodeos.map(rod=>{const rows=rs.filter(r=>r.rodeo===rod).sort((a,b)=>a.turno<b.turno?-1:1);const tot=rows.reduce((a,r)=>a+(calc(r).cv||0),0);const prev=prevOf(rod,f);
+    return `\nRodeo ${rod} (${f0(rows[0].vacas)} vacas): ${f1(tot)} kg MS/vaca/día${prev?` (anterior ${f1(prev[1])})`:''}\n`+rows.map(r=>{const c=calc(r);return `· ${r.turno} lote ${r.lote}: ${f0(r.pre)}→${f0(r.post)}, efic. ${pct(c.ef)}, ${f1(c.cv)} kg MS/vaca`}).join('\n')}).join('\n')}
+$('#r-sum').addEventListener('click',async e=>{if(e.target.id!=='r-copy')return;try{await navigator.clipboard.writeText(sumText);$('#r-cmsg').textContent='Copiado ✓'}catch(err){$('#r-cmsg').textContent='No se pudo copiar en este dispositivo.'}});
+function renderRec(){const fechas=[...new Set(live().map(r=>r.fecha))].sort().reverse();const sel=$('#r-fecha'),cur=sel.value;
+  sel.innerHTML=fechas.map(f=>`<option value="${esc(f)}">${esc(dlabel(f)+'/'+f.slice(0,4))}</option>`).join('');
+  if(fechas.includes(cur))sel.value=cur;const f=sel.value;
+  if(!fechas.length){$('#r-sum').innerHTML='<p class="empty">Todavía no hay parcelas cargadas.</p>';$('#r-list').innerHTML='';$('#r-dh').hidden=true;return}
+  $('#r-dh').hidden=false;
+  const rs=live().filter(r=>r.fecha===f);const rodeos=[...new Set(rs.map(r=>r.rodeo))].sort(sortNat);renderSum(f,rs,rodeos);
+  $('#r-list').innerHTML=rodeos.map(rod=>{const rows=rs.filter(r=>r.rodeo===rod).sort((a,b)=>a.turno<b.turno?-1:1);
+    const tot=rows.reduce((a,r)=>a+(calc(r).cv||0),0);const days=rodeoDays(rod);const i=days.findIndex(d=>d[0]===f);const prev=i>0?days[i-1]:null;
+    let dl='Primera medición de este rodeo';if(prev){const d=tot-prev[1];dl=`Medición anterior (${esc(dlabel(prev[0]))}): ${f1(prev[1])} · <span class="${d>=0?'up':'dn'}">${d>=0?'+':''}${f1(d)}</span>`}
+    return `<div class="card"><div class="top"><strong style="font-size:19px">Rodeo ${esc(rod)} · ${f0(rows[0].vacas)} animales</strong><span><span class="tot">${f1(tot)}</span> <span class="delta">kg MS/vaca/día</span></span></div>
+    <p class="delta" style="margin:2px 0 8px">${dl}</p>
+    ${rows.map(r=>{const c=calc(r);return `<div class="prc"><div class="prc1"><span>${esc(r.turno)} · Lote ${esc(r.lote)}${r.recurso?`<span class="tag">${esc(r.recurso)}</span>`:''}</span><b>${f1(c.cv)} <small>kg MS/vaca</small></b></div>
+      <div class="prc2"><span>${f1(r.ha,2)} ha · ${f0(r.pre)} → ${r.post==null?'sin final':f0(r.post)} kg MS/ha · efic. ${pct(c.ef)}</span>${r.nota?`<span style="flex-basis:100%;color:var(--bad)">${esc(r.nota)}</span>`:''}<span><button class="sm" data-ed="${esc(r.id)}">Editar</button> <button class="sm danger" data-del="${esc(r.id)}">${armed===r.id?'¿Borrar?':'Borrar'}</button></span></div></div>`}).join('')}
+    </div>`}).join('')}
+$('#r-fecha').onchange=renderRec;
+$('#r-list').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.ed)edit(b.dataset.ed);
+  if(b.dataset.del){const id=b.dataset.del;if(armed!==id){armed=id;renderRec();return}armed=null;const r=S.recs[id];if(r){r.del=true;r.upd=Date.now();if(!S.pend.includes(id))S.pend.push(id);persist();flush()}renderRec()}};
+
+/* ---------- gráficos ---------- */
+const charts={};
+function chart(id,series,opt={}){const box=$('#'+id);
+  const draw=()=>{const W=box.clientWidth,H=box.clientHeight;if(!W)return;const pts=series.flatMap(s=>s.pts);
+    if(!pts.length){box.innerHTML='<p class="empty" style="margin:0;position:absolute;inset:0;display:grid;place-items:center">Faltan datos para este gráfico.</p>';return}
+    const narrow=W<520,L=narrow?44:52,R=12,T=12,B=28;let x0=Math.min(...pts.map(p=>p.x)),x1=Math.max(...pts.map(p=>p.x));if(x0===x1){x0-=4*864e5;x1+=4*864e5}
+    let y1=Math.max(...pts.map(p=>p.y))*1.12,y0=Math.min(0,...pts.map(p=>p.y));if(y1<=y0)y1=y0+1;
+    const sx=x=>L+(x-x0)/(x1-x0)*(W-L-R),sy=y=>T+(1-(y-y0)/(y1-y0))*(H-T-B);
+    const step=Math.pow(10,Math.floor(Math.log10((y1-y0)/4)));const st=[1,2,5,10].map(m=>m*step).find(s=>(y1-y0)/s<=5)||step*10;
+    let g='';for(let v=Math.ceil(y0/st)*st;v<=y1;v+=st)g+=`<line x1="${L}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)"/><text x="${L-6}" y="${sy(v)+4}" text-anchor="end" font-size="12" fill="var(--mut)">${f0(v)}</text>`;
+    const nt=narrow?3:6;for(let i=0;i<=nt;i++){const x=x0+(x1-x0)*i/nt,d=new Date(x);g+=`<text x="${sx(x)}" y="${H-8}" text-anchor="${i===0?'start':i===nt?'end':'middle'}" font-size="12" fill="var(--mut)">${d.getDate()}/${d.getMonth()+1}</text>`}
+    series.forEach(s=>{const p=[...s.pts].sort((a,b)=>a.x-b.x);if(opt.bars){const bw=Math.max(4,Math.min(18,(W-L-R)/p.length*.5));p.forEach(q=>g+=`<rect x="${sx(q.x)-bw/2}" y="${sy(q.y)}" width="${bw}" height="${Math.max(0,sy(y0)-sy(q.y))}" rx="2" fill="${s.c}"/>`);return}
+      g+=`<polyline fill="none" stroke="${s.c}" stroke-width="2.5" stroke-linejoin="round" points="${p.map(q=>sx(q.x)+','+sy(q.y)).join(' ')}"/>`+p.map(q=>`<circle cx="${sx(q.x)}" cy="${sy(q.y)}" r="3.5" fill="${s.c}"><title>${esc(s.name)} ${new Date(q.x).toLocaleDateString('es-AR')}: ${f1(q.y)}</title></circle>`).join('')});
+    box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img">${g}</svg>`};
+  if(charts[id])charts[id].disconnect();charts[id]=new ResizeObserver(draw);charts[id].observe(box)}
+function renderGraf(){const rodeos=[...new Set(live().map(r=>r.rodeo))].sort(sortNat);
+  const ser=rodeos.map((r,i)=>({name:'Rodeo '+r,c:PAL[i%PAL.length],pts:rodeoDays(r).map(([f,v])=>({x:dms(f),y:v}))}));
+  chart('g-rodeo',ser);$('#lg-rodeo').innerHTML=ser.map(s=>`<span><i style="background:${s.c}"></i>${esc(s.name)}</span>`).join('');
+  const lotes=[...new Set([...S.lotes.map(l=>l.nombre),...live().map(r=>r.lote)])].sort(sortNat);const sel=$('#g-lote'),cur=sel.value;
+  sel.innerHTML=lotes.map(l=>`<option value="${esc(l)}">${esc(l)}${loteObj(l)?.recurso?' · '+esc(loteObj(l).recurso):''}</option>`).join('');
+  const withData=lotes.filter(l=>live().some(r=>r.lote===l));sel.value=lotes.includes(cur)?cur:(withData[0]||lotes[0]||'');
+  const lo=sel.value;chart('g-cons',[{name:'Lote '+lo,c:PAL[0],pts:live().filter(r=>r.lote===lo).map(r=>({x:dms(r.fecha),y:calc(r).ch}))}],{bars:true});
+  chart('g-crec',[{name:'Lote '+lo,c:PAL[1],pts:growth(lo)}]);
+  $('#t-lotes').innerHTML='<thead><tr><th>Lote</th><th>Recurso</th><th>Pastoreos</th><th>Último</th><th>kg MS/ha cosech. (prom.)</th><th>Última tasa crec.</th></tr></thead><tbody>'+
+    lotes.map(l=>{const rs=live().filter(r=>r.lote===l);const last=rs.map(r=>r.fecha).sort().pop();const avg=rs.length?rs.reduce((a,r)=>a+(calc(r).ch||0),0)/rs.length:null;const g=growth(l).pop();
+      return `<tr><td>${esc(l)}</td><td style="text-align:left">${esc(loteObj(l)?.recurso||'')}</td><td>${rs.length}</td><td>${esc(dlabel(last||''))||'—'}</td><td>${f0(avg)}</td><td>${g?f0(g.y):'—'}</td></tr>`}).join('')+'</tbody>'}
+$('#g-lote').onchange=renderGraf;
+
+/* ---------- base: lotes y operarios ---------- */
+let dL=null,dO=null,dirty=false;
+const loadDrafts=()=>{dL=S.lotes.map(l=>({...l}));dO=opsList().map(o=>({...o}));dirty=false};
+function renderBase(){if(!dL||!dirty)loadDrafts();drawBase();$('#b-msg').textContent=dirty?'Cambios sin guardar':'';
+  $('#d-info').textContent=`${live().length} parcelas registradas en ${new Set(live().map(r=>r.fecha)).size} recorridas.`+' Se guardan en el teléfono y se suben a la planilla cuando hay señal.'}
+function drawBase(){
+  $('#b-lotes').innerHTML=dL.length?dL.map((l,i)=>`<div class="lrow"><input data-l="${i}" data-k="nombre" value="${esc(l.nombre)}" aria-label="Lote"><input data-l="${i}" data-k="recurso" value="${esc(l.recurso||'')}" aria-label="Recurso" list="dl-rec"><input data-l="${i}" data-k="sup" inputmode="decimal" value="${esc(l.sup??'')}" aria-label="Superficie ha"><input data-l="${i}" data-k="largo" inputmode="decimal" value="${esc(l.largo??'')}" aria-label="Largo m"><button class="x" data-rl="${i}" aria-label="Quitar lote">×</button></div>`).join(''):'<p class="empty">Sin lotes cargados.</p>';
+  $('#b-ops').innerHTML=dO.length?dO.map((o,i)=>`<div class="orow"><input data-o="${i}" data-k="nombre" value="${esc(o.nombre)}" aria-label="Nombre"><input data-o="${i}" data-k="paso" inputmode="decimal" value="${esc(o.paso??'')}" aria-label="Paso en metros"><button class="x" data-ro="${i}" aria-label="Quitar operario">×</button></div>`).join(''):'<p class="empty">Agregá a quienes miden y cuánto mide su paso.</p>';
+  $('#dl-rec').innerHTML=[...new Set(dL.map(l=>l.recurso).filter(Boolean))].map(r=>`<option value="${esc(r)}">`).join('')}
+const touch=()=>{dirty=true;$('#b-msg').textContent='Cambios sin guardar'};
+$('#v-base').addEventListener('input',e=>{const t=e.target,k=t.dataset.k;if(!k)return;
+  if(t.dataset.l!=null)dL[+t.dataset.l][k]=(k==='largo'||k==='sup')?num(t.value):t.value;
+  if(t.dataset.o!=null)dO[+t.dataset.o][k]=k==='paso'?num(t.value):t.value;touch()});
+$('#v-base').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.rl!=null){dL.splice(+b.dataset.rl,1);drawBase();touch()}
+  if(b.dataset.ro!=null){dO.splice(+b.dataset.ro,1);drawBase();touch()}});
+$('#b-addl').onclick=()=>{dL.push({id:uid(),nombre:'',recurso:'',sup:null,largo:null});drawBase();touch();$('#b-lotes').lastElementChild.querySelector('input').focus()};
+$('#b-addo').onclick=()=>{dO.push({id:uid(),nombre:'',paso:null});drawBase();touch();$('#b-ops').lastElementChild.querySelector('input').focus()};
+$('#b-pastego').onclick=()=>{const lines=$('#b-paste').value.split(/\r?\n/).filter(s=>s.trim());if(!lines.length)return;
+  let idx={nombre:0,recurso:1,sup:2,largo:3};const h=lines[0].toLowerCase().split(/\t|;/).map(s=>s.trim());
+  if(h.includes('lote')){idx={nombre:h.indexOf('lote'),recurso:h.indexOf('recurso'),sup:h.findIndex(x=>x.startsWith('sup')),largo:h.indexOf('largo')};lines.shift()}
+  let n=0;lines.forEach(line=>{const c=line.split(/\t|;/).map(s=>s.trim());const nombre=c[idx.nombre];if(!nombre)return;
+    const v={recurso:idx.recurso>=0?c[idx.recurso]||'':'',sup:idx.sup>=0?num(c[idx.sup]):null,largo:idx.largo>=0?num(c[idx.largo]):null};
+    const ex=dL.find(l=>String(l.nombre).toLowerCase()===nombre.toLowerCase());if(ex)Object.assign(ex,v);else dL.push({id:uid(),nombre,...v});n++});
+  $('#b-paste').value='';drawBase();touch();$('#b-msg').textContent=`${n} lotes leídos. Tocá Guardar cambios.`};
+$('#b-save').onclick=()=>{S.lotes=dL.filter(l=>String(l.nombre).trim()).map(l=>({id:l.id||uid(),nombre:String(l.nombre).trim(),recurso:String(l.recurso||'').trim(),sup:l.sup??null,largo:l.largo??null}));
+  S.ops=dO.filter(o=>String(o.nombre).trim()).map(o=>({id:o.id||uid(),nombre:String(o.nombre).trim(),paso:o.paso}));
+  S.cfgUpd=Date.now();S.pendCfg=true;persist();loadDrafts();renderBase();$('#b-msg').textContent='Guardado ✓';fillSelects();renderForm();flush()};
+$('#d-copy').onclick=async()=>{const h=['Fecha','Turno','Rodeo','Animales','Lote','Recurso','Operario','Pasos','Paso (m)','Largo (m)','Ancho (m)','Superficie (ha)','Disp. inicial','Disp. final','Eficiencia','kg MS/vaca'];
+  const rows=live().sort((a,b)=>a.fecha<b.fecha?-1:a.fecha>b.fecha?1:sortNat(a.rodeo,b.rodeo)).map(r=>{const c=calc(r);return[r.fecha,r.turno,r.rodeo,r.vacas,r.lote,r.recurso,r.operario,r.pasos,r.paso,r.largo,r.ancho!=null?+r.ancho.toFixed(1):'',r.ha!=null?+r.ha.toFixed(3):'',r.pre,r.post,c.ef!=null?+c.ef.toFixed(3):'',c.cv!=null?+c.cv.toFixed(2):''].map(v=>String(v??'').replace('.',',')).join('\t')});
+  try{await navigator.clipboard.writeText([h.join('\t'),...rows].join('\n'));$('#d-msg').textContent='Copiado: pegalo en Excel.'}catch(e){$('#d-msg').textContent='No se pudo copiar en este dispositivo.'}};
+
+/* ---------- oferta forrajera ---------- */
+const recKey=r=>String(r||'Sin recurso').trim()||'Sin recurso';
+function recursos(){const m={};S.lotes.forEach(l=>{const k=recKey(l.recurso);(m[k]=m[k]||{recurso:k,lotes:[],sup:0,sinSup:[]}).lotes.push(l.nombre);if(l.sup!=null)m[k].sup+=l.sup;else m[k].sinSup.push(l.nombre)});
+  return Object.values(m).sort((a,b)=>b.sup-a.sup)}
+function tasaMedida(rec){const lim=Date.now()-60*864e5;const ys=S.lotes.filter(l=>recKey(l.recurso)===rec).flatMap(l=>growth(l.nombre)).filter(p=>p.x>=lim&&isFinite(p.y)).map(p=>p.y);return ys.length?ys.reduce((a,b)=>a+b,0)/ys.length:null}
+const consumoDia=f=>live().filter(r=>r.fecha===f).reduce((a,r)=>{const c=calc(r);return a+(c.ch!=null&&r.ha?c.ch*r.ha:0)},0);
+const ofertaTot=rs=>rs.reduce((a,r)=>a+(S.tasas[r.recurso]!=null?S.tasas[r.recurso]*r.sup:0),0);
+let tasaTimer=null;
+function renderOf(){const rs=recursos();const fechas=[...new Set(live().map(r=>r.fecha))].sort().reverse();const sel=$('#o-fecha'),cur=sel.value;
+  sel.innerHTML=fechas.length?fechas.map(f=>`<option value="${esc(f)}">${esc(dlabel(f)+'/'+f.slice(0,4))}</option>`).join(''):'<option value="">Sin recorridas</option>';if(fechas.includes(cur))sel.value=cur;
+  $('#o-tab').innerHTML='<thead><tr><th>Recurso</th><th>Lotes</th><th>Sup. (ha)</th><th>Tasa estimada (kg MS/ha/día)</th><th>Tasa medida</th><th>Oferta (kg MS/día)</th></tr></thead><tbody>'+
+    rs.map(r=>{const m=tasaMedida(r.recurso),t=S.tasas[r.recurso];return `<tr><td>${esc(r.recurso)}</td><td>${r.lotes.length}</td><td>${f1(r.sup)}${r.sinSup.length?`<br><small style="color:var(--bad)">sin sup.: ${esc(r.sinSup.join(', '))}</small>`:''}</td>
+      <td><input class="tasa" data-rec="${esc(r.recurso)}" inputmode="decimal" value="${t!=null?esc(String(t).replace('.',',')):''}" aria-label="Tasa ${esc(r.recurso)}"></td>
+      <td>${m!=null?`<button class="usar" data-usar="${esc(r.recurso)}" data-v="${Math.round(m)}">${f0(m)}</button>`:'—'}</td><td data-of="${esc(r.recurso)}">${t!=null?f0(t*r.sup):'—'}</td></tr>`}).join('')+
+    `</tbody><tfoot><tr><td><b>Total</b></td><td>${S.lotes.length}</td><td>${f1(rs.reduce((a,r)=>a+r.sup,0))}</td><td></td><td></td><td><b id="o-tot">—</b></td></tr></tfoot>`;
+  if(!S.lotes.length)$('#o-tab').innerHTML='<tbody><tr><td class="empty">Cargá los lotes en la pestaña Lotes.</td></tr></tbody>';
+  updOf();renderOfHist()}
+function updOf(){const rs=recursos(),of=ofertaTot(rs),f=$('#o-fecha').value,co=f?consumoDia(f):0;
+  rs.forEach(r=>{const td=document.querySelector(`[data-of="${CSS.escape(r.recurso)}"]`);if(td)td.textContent=S.tasas[r.recurso]!=null?f0(S.tasas[r.recurso]*r.sup):'—'});
+  if($('#o-tot'))$('#o-tot').textContent=f0(of);
+  $('#o-of').textContent=of?f0(of):'—';$('#o-co').textContent=co?f0(co):'—';$('#o-col').textContent=f?`kg MS/día consumidos el ${dlabel(f)} (medido)`:'kg MS/día consumidos (medido)';
+  const b=of&&co?of-co:null;$('#o-ba').textContent=b==null?'—':(b>=0?'+':'')+f0(b);$('#o-bal').textContent=b==null?'balance':b>=0?`sobran kg MS/día (oferta ${pct(of/co)} del consumo)`:`faltan kg MS/día (oferta ${pct(of/co)} del consumo)`;
+  const nr=f?live().filter(r=>r.fecha===f):[];$('#o-note').textContent=f?`Consumo = suma de (disponibilidad inicial − final) × superficie de las ${nr.length} parcelas medidas ese día, de ${new Set(nr.map(r=>r.rodeo)).size} rodeos.`:''}
+$('#o-fecha').onchange=updOf;
+$('#o-tab').addEventListener('input',e=>{const t=e.target;if(!t.dataset.rec)return;const v=num(t.value);if(v==null)delete S.tasas[t.dataset.rec];else S.tasas[t.dataset.rec]=v;
+  S.tasasUpd=Date.now();S.pendTasas=true;persist();updOf();clearTimeout(tasaTimer);tasaTimer=setTimeout(flush,1500)});
+$('#o-tab').addEventListener('click',e=>{const b=e.target.closest('[data-usar]');if(!b)return;S.tasas[b.dataset.usar]=+b.dataset.v;S.tasasUpd=Date.now();S.pendTasas=true;persist();renderOf();flush()});
+$('#o-save').onclick=()=>{const rs=recursos(),f=$('#o-fecha').value,hoy=today();
+  const o={fecha:hoy,recorrida:f||'',recursos:rs.map(r=>({recurso:r.recurso,lotes:r.lotes.length,sup:+r.sup.toFixed(2),tasa:S.tasas[r.recurso]??null,oferta:S.tasas[r.recurso]!=null?Math.round(S.tasas[r.recurso]*r.sup):null})),
+    oferta:Math.round(ofertaTot(rs)),consumo:f?Math.round(consumoDia(f)):null,upd:Date.now()};
+  S.ofertas[hoy]=o;if(!S.pendOf.includes(hoy))S.pendOf.push(hoy);persist();$('#o-msg').textContent=`Guardada la oferta del ${dlabel(hoy)} ✓`;renderOfHist();flush()};
+function renderOfHist(){const hs=Object.values(S.ofertas).filter(o=>o&&o.fecha).sort((a,b)=>a.fecha<b.fecha?1:-1);
+  $('#o-hist').innerHTML=hs.length?'<thead><tr><th>Fecha</th><th>Recorrida</th><th>Oferta</th><th>Consumo</th><th>Balance</th></tr></thead><tbody>'+hs.map(o=>{const b=o.oferta&&o.consumo?o.oferta-o.consumo:null;
+    return `<tr><td>${esc(dlabel(o.fecha))}</td><td>${esc(dlabel(o.recorrida||''))||'—'}</td><td>${f0(o.oferta)}</td><td>${f0(o.consumo)}</td><td class="${b==null?'':b>=0?'up':'dn'}">${b==null?'—':(b>=0?'+':'')+f0(b)}</td></tr>`}).join('')+'</tbody>':'<tbody><tr><td class="empty">Todavía no guardaste ninguna oferta.</td></tr></tbody>';
+  chart('g-of',[{name:'Oferta',c:PAL[0],pts:hs.filter(o=>o.oferta).map(o=>({x:dms(o.fecha),y:o.oferta}))},{name:'Consumo',c:PAL[1],pts:hs.filter(o=>o.consumo).map(o=>({x:dms(o.recorrida||o.fecha),y:o.consumo}))}])}
+
+/* ---------- producción ---------- */
+function prodCalc(){const d0=$('#p-desde').value,d1=$('#p-hasta').value,gap=Math.max(1,num($('#p-gap').value)||14);
+  const rs=live().filter(r=>(!d0||r.fecha>=d0)&&(!d1||r.fecha<=d1));
+  const byL={};rs.forEach(r=>{(byL[r.lote]=byL[r.lote]||[]).push(r)});
+  const lotes=[];const sinSup=[];
+  Object.entries(byL).forEach(([l,arr])=>{arr.sort((a,b)=>a.fecha<b.fecha?-1:1);const lo=loteObj(l);
+    const pas=[];arr.forEach(r=>{const last=pas[pas.length-1];if(last&&(dms(r.fecha)-dms(last.f1))/864e5<gap){last.rs.push(r);last.f1=r.fecha}else pas.push({f0:r.fecha,f1:r.fecha,rs:[r]})});
+    const val=pas.map(p=>{const ok=p.rs.filter(r=>calc(r).ch!=null);return ok.length?{f:p.f0,rec:recKey(ok[0].recurso||lo?.recurso),kgha:ok.reduce((a,r)=>a+calc(r).ch,0)/ok.length}:null}).filter(Boolean);
+    const rec=recKey(lo?.recurso||arr[0].recurso);const sup=lo?.sup??null;if(sup==null)sinSup.push(l);
+    lotes.push({lote:l,rec,sup,pas:pas.length,val,kgha:val.reduce((a,p)=>a+p.kgha,0),est:false})});
+  const medidos=new Set(lotes.map(x=>x.lote));
+  const recAvg={};lotes.filter(x=>x.val.length).forEach(x=>{const k=x.rec;(recAvg[k]=recAvg[k]||[]).push(x.kgha)});
+  Object.keys(recAvg).forEach(k=>recAvg[k]=recAvg[k].reduce((a,b)=>a+b,0)/recAvg[k].length);
+  S.lotes.filter(l=>!medidos.has(l.nombre)).forEach(l=>{const k=recKey(l.recurso);lotes.push({lote:l.nombre,rec:k,sup:l.sup,pas:0,val:[],kgha:recAvg[k]??null,est:true})});
+  lotes.forEach(x=>{x.kg=x.sup!=null&&x.kgha!=null?x.kgha*x.sup:null});
+  const fs=rs.map(r=>r.fecha).sort();const days=fs.length?Math.max(1,(dms(d1||fs[fs.length-1])-dms(d0||fs[0]))/864e5+7):null;
+  return{lotes,sinSup,days,gap}}
+function renderProd(){const fs=live().map(r=>r.fecha).sort();if(fs.length){if(!$('#p-desde').value)$('#p-desde').value=fs[0];if(!$('#p-hasta').value)$('#p-hasta').value=fs[fs.length-1]}
+  const{lotes,sinSup,days}=prodCalc();const ok=lotes.filter(x=>x.kg!=null);const med=ok.filter(x=>!x.est);
+  const tot=ok.reduce((a,x)=>a+x.kg,0),sup=ok.reduce((a,x)=>a+x.sup,0),supMed=med.reduce((a,x)=>a+x.sup,0),supAll=S.lotes.reduce((a,l)=>a+(l.sup||0),0);
+  $('#p-tot').textContent=tot?f1(tot/1000):'—';$('#p-ha').textContent=sup?f0(tot/sup):'—';$('#p-dia').textContent=days&&tot?f0(tot/days):'—';
+  $('#p-dial').textContent=days?`kg MS/día en ${f0(days)} días`:'kg MS/día';
+  $('#p-cov').textContent=`Lotes medidos: ${med.length} (${f0(supMed)} de ${f0(supAll)} ha). Del total, ${f1(med.reduce((a,x)=>a+x.kg,0)/1000)} t salen de mediciones y ${f1((tot-med.reduce((a,x)=>a+x.kg,0))/1000)} t están estimadas por recurso.`+(sinSup.length?` Sin superficie en la base: lote ${sinSup.join(', ')}.`:'');
+  const R={};const gR=k=>R[k]=R[k]||{rec:k,sup:0,kg:0,lm:0,le:0,pas:0,ls:new Set()};
+  ok.forEach(x=>{if(x.est){const r=gR(x.rec);r.kg+=x.kg;r.sup+=x.sup;r.le++;return}
+    x.val.forEach(p=>{const r=gR(p.rec);r.kg+=p.kgha*x.sup;r.pas++;if(!r.ls.has(x.lote)){r.ls.add(x.lote);r.sup+=x.sup;r.lm++}})});
+  const rr=Object.values(R).sort((a,b)=>b.kg-a.kg);
+  $('#p-rec').innerHTML='<thead><tr><th>Recurso (al pastorear)</th><th>Sup. (ha)</th><th>Lotes medidos / estimados</th><th>Pastoreos medidos</th><th>kg MS/ha</th><th>t MS</th><th>% del total</th></tr></thead><tbody>'+
+    rr.map(r=>`<tr><td>${esc(r.rec)}</td><td>${f1(r.sup)}</td><td>${r.lm} / ${r.le}</td><td>${r.pas}</td><td>${f0(r.kg/r.sup)}</td><td><b>${f1(r.kg/1000)}</b></td><td>${pct(r.kg/tot)}</td></tr>`).join('')+'</tbody>';
+  const sorted=[...lotes].sort((a,b)=>(b.kg??-1)-(a.kg??-1));
+  $('#p-lot').innerHTML='<thead><tr><th>Lote</th><th>Recurso</th><th>Sup. (ha)</th><th>Pastoreos medidos</th><th>kg MS/ha</th><th>t MS</th></tr></thead><tbody>'+
+    sorted.map(x=>`<tr><td>${esc(x.lote)}${x.est?' *':''}</td><td style="text-align:left">${esc(x.rec)}</td><td>${x.sup!=null?f1(x.sup):'<span class="dn">falta</span>'}</td><td>${x.val.length}${x.pas>x.val.length?` <small class="dn">(+${x.pas-x.val.length} sin final)</small>`:''}</td><td>${f0(x.kgha)}</td><td>${x.kg!=null?f1(x.kg/1000):'—'}</td></tr>`).join('')+'</tbody>';
+  const M={};med.forEach(x=>x.val.forEach(p=>{const k=p.f.slice(0,7);M[k]=(M[k]||0)+p.kgha*x.sup/1000}));
+  chart('g-prod',[{name:'t MS',c:PAL[0],pts:Object.entries(M).map(([k,v])=>({x:dms(k+'-15'),y:v}))}],{bars:true})}
+['p-desde','p-hasta','p-gap'].forEach(id=>$('#'+id).addEventListener('change',renderProd));
+
+/* ---------- conexión ---------- */
+$('#c-url').value=API.url;$('#c-k').value=API.k;
+$('#c-save').onclick=async()=>{API={url:$('#c-url').value.trim(),k:$('#c-k').value.trim()};try{localStorage.setItem(KEY+'.api',JSON.stringify(API))}catch(e){}
+  $('#c-msg').textContent='Probando…';await sync();$('#c-msg').textContent=syncErr?syncErr:'Conectado ✓ '+live().length+' parcelas en la planilla.'};
+$('#c-sync').onclick=()=>sync();
+$('#c-link').onclick=async()=>{if(!API.url){$('#c-msg').textContent='Primero cargá la dirección y la clave.';return}
+  const l=location.origin+location.pathname+'?u='+encodeURIComponent(API.url)+'&k='+encodeURIComponent(API.k);
+  try{await navigator.clipboard.writeText(l);$('#c-msg').textContent='Link copiado ✓'}catch(e){$('#c-msg').textContent=l}};
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+function renderAll(){fillSelects();renderForm();if(tab==='rec')renderRec();if(tab==='graf')renderGraf();if(tab==='of')renderOf();if(tab==='prod')renderProd();if(tab==='base')renderBase()}
+renderAll();status();
+}
+</script>
+</body>
+</html>
