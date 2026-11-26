@@ -63,9 +63,18 @@ th{font-size:12px;color:var(--mut);font-weight:600;white-space:normal}
 th:first-child,td:first-child{text-align:left}
 .scroll{overflow-x:auto}
 .tasa{width:90px;min-height:40px;padding:6px 8px;text-align:right}.usar{min-height:34px;padding:4px 10px;font-size:14px}
+.sem{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:6px}
+.semc{background:var(--card);border-radius:14px;padding:12px 14px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:center}
+.luz{width:34px;height:34px;border-radius:50%;grid-row:span 5;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15)}
+.luz.verde{background:#2f9e55}.luz.amarillo{background:#f2c230}.luz.rojo{background:#d64541}.luz.gris{background:var(--line)}
+.semc b{font:700 22px/1 'Barlow Semi Condensed',sans-serif}.semc small{color:var(--mut);font-size:13px}
+.trow{display:grid;grid-template-columns:minmax(0,1.4fr) 72px 80px 34px;gap:6px;margin-bottom:6px}.trow input{min-height:42px;padding:8px}
+.step{display:grid;grid-template-columns:minmax(0,1fr) 44px 64px 44px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.step input{text-align:center;padding:8px 4px}.step button{padding:0;font-size:22px}
 .tag{display:inline-block;font-size:12px;background:var(--hay);color:#2a2200;border-radius:6px;padding:1px 7px;margin-left:6px}
 nav{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:5}
-nav button{flex:1;border:0;background:transparent;font-size:12px;color:var(--mut);min-height:52px;padding:4px}
+nav{overflow-x:auto;scrollbar-width:none}nav::-webkit-scrollbar{display:none}
+nav button{flex:1 0 auto;min-width:62px;border:0;background:transparent;font-size:12px;color:var(--mut);min-height:52px;padding:4px 6px}
 nav button.on{color:var(--g2);box-shadow:inset 0 3px 0 var(--g2);border-radius:0}
 .fig{position:relative;min-height:260px;margin-bottom:6px}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;margin-bottom:14px}
@@ -184,6 +193,85 @@ nav button.on{color:var(--g2);box-shadow:inset 0 3px 0 var(--g2);border-radius:0
   <p class="hint">Cada medición es una franja del lote. Se supone que todo el lote se come igual que la franja medida: kg MS cosechados = (disp. inicial − final) × superficie del lote. Las mediciones del mismo lote cercanas en el tiempo (según los días de arriba) son el mismo pastoreo y se promedian. Los lotes sin mediciones válidas se estiman con el promedio kg MS/ha de su recurso y se marcan con *. Las parcelas sin disponibilidad final no se usan.</p></details>
 </section>
 
+<section id="v-com" hidden>
+  <h2>Bienestar por rodeo</h2>
+  <div id="k-sem"></div>
+  <div class="seg" id="k-modo" style="margin:14px 0 4px"><button type="button" data-v="com" class="on">Comederos</button><button type="button" data-v="som">Media sombra</button></div>
+  <div id="pane-com">
+  <h3 id="k-ftit">Cargar comederos de un rodeo</h3>
+  <div class="grid">
+    <div><label for="k-fecha">Fecha</label><input type="date" id="k-fecha"></div>
+    <div><label for="k-rodeo">Rodeo</label><input id="k-rodeo" list="dl-rodeos" placeholder="Ej: 4"></div>
+    <div class="full"><label for="k-anim">Número de animales</label><input id="k-anim" type="number" inputmode="numeric"><p class="hint" id="k-animh"></p></div>
+  </div>
+  <div id="k-items"></div>
+  <div class="grid" style="margin-top:12px">
+    <div><label for="k-kg">Kg por descarga del mixer (tal cual)</label><input id="k-kg" inputmode="decimal"></div>
+    <div><label for="k-dens">Densidad de la ración (kg/m³)</label><input id="k-dens" inputmode="decimal"></div>
+    <div class="full"><details><summary class="hint">¿Cómo medir la densidad?</summary>
+      <p class="hint">Llená un balde de volumen conocido con la ración recién descargada, sin apretar, y pesalo (restá el peso del balde).</p>
+      <div class="grid"><div><label for="k-bl">Litros del balde</label><input id="k-bl" inputmode="decimal"></div><div><label for="k-bkg">Kg de ración en el balde</label><input id="k-bkg" inputmode="decimal"></div></div>
+      <p class="hint" id="k-bres"></p></details></div>
+  </div>
+  <div class="res" aria-live="polite" id="k-res">
+    <div><span class="big" id="k-mpa">—</span><small>metros de frente por animal</small></div>
+    <div><span class="n" id="k-m">—</span><small>metros ofrecidos</small></div>
+    <div><span class="n" id="k-est">—</span><small id="k-estl">estado</small></div>
+  </div>
+  <div class="res" aria-live="polite" id="k-resv" style="margin-top:-6px">
+    <div><span class="big" id="k-oc">—</span><small>de la capacidad ocupa una descarga</small></div>
+    <div><span class="n" id="k-lr">—</span><small>litros de ración</small></div>
+    <div><span class="n" id="k-estv">—</span><small id="k-estvl">capacidad</small></div>
+  </div>
+  <button class="pri" id="k-save">Guardar</button>
+  <div class="row" style="margin-top:10px"><button id="k-cancel" hidden>Cancelar edición</button></div>
+  <h3>Cargas anteriores</h3>
+  <div id="k-hist"></div>
+  <h3>Tipos de comedero</h3>
+  <p class="hint" style="margin-top:0">Metros de frente útil y capacidad en litros de cada unidad. Si las vacas comen de los dos lados, poné el frente de ambos lados. Capacidad: largo × ancho × alto útil (m) × 1000.</p>
+  <div class="trow" style="font-size:12px;color:var(--mut)"><span>Tipo</span><span>Metros</span><span>Litros</span><span></span></div>
+  <div id="k-tipos"></div>
+  <div class="row"><button class="sm" id="k-addt">+ Agregar tipo</button></div>
+  <div class="grid" style="margin-top:12px">
+    <div><label for="k-cdens">Densidad habitual de la ración (kg/m³)</label><input id="k-cdens" inputmode="decimal"></div>
+    <div><label for="k-cva">Volumen: amarillo desde (% de ocupación)</label><input id="k-cva" inputmode="numeric"></div>
+  </div>
+  <h3>Frente por animal según el rodeo</h3>
+  <div class="trow" style="font-size:12px;color:var(--mut);grid-template-columns:minmax(0,1.4fr) 80px 80px 34px"><span>Rodeo</span><span>Amarillo desde (m)</span><span>Verde desde (m)</span><span></span></div>
+  <div id="k-objs"></div>
+  <div class="row"><button class="sm" id="k-addo">+ Agregar rodeo</button></div>
+  <p class="hint">Los rodeos que no estén en la lista usan la fila "Otros". El nombre tiene que coincidir con cómo se carga el rodeo (ej: 1, Frescas, Preparto).</p>
+  <p class="hint">Frente — verde: llega al valor verde; amarillo: entre el amarillo y el verde; rojo: por debajo del amarillo. Volumen — verde: una descarga ocupa menos del % elegido de la capacidad; amarillo: entre ese % y el 100%; rojo: no entra.</p>
+  <div class="row" style="margin-top:8px"><button class="pri" id="k-savet" style="width:auto">Guardar tipos y objetivo</button><span class="hint" id="k-tmsg"></span></div>
+  </div>
+  <div id="pane-som" hidden>
+  <h3 id="s-ftit">Cargar media sombra de un rodeo</h3>
+  <div class="grid">
+    <div><label for="s-fecha">Fecha</label><input type="date" id="s-fecha"></div>
+    <div><label for="s-rodeo">Rodeo</label><input id="s-rodeo" list="dl-rodeos" placeholder="Ej: 4"></div>
+    <div><label for="s-anim">Número de animales</label><input id="s-anim" type="number" inputmode="numeric"></div>
+    <div><label for="s-cant">Medias sombras</label><div class="step" style="grid-template-columns:44px minmax(0,1fr) 44px;border:0;padding:0"><button type="button" id="s-menos" aria-label="Una menos">−</button><input id="s-cant" inputmode="numeric" value="0"><button type="button" id="s-mas" aria-label="Una más">+</button></div></div>
+    <p class="hint full" id="s-animh" style="margin:0"></p>
+  </div>
+  <div class="res" aria-live="polite" id="s-res">
+    <div><span class="big" id="s-mpa">—</span><small>m² de sombra por animal</small></div>
+    <div><span class="n" id="s-m">—</span><small>m² ofrecidos</small></div>
+    <div><span class="n" id="s-est">—</span><small id="s-estl">estado</small></div>
+  </div>
+  <button class="pri" id="s-save">Guardar</button>
+  <div class="row" style="margin-top:10px"><button id="s-cancel" hidden>Cancelar edición</button></div>
+  <h3>Cargas anteriores</h3>
+  <div id="s-hist"></div>
+  <h3>Medidas</h3>
+  <div class="grid">
+    <div><label for="s-cm2">m² por media sombra</label><input id="s-cm2" inputmode="decimal"></div>
+    <div><label for="s-cobj">Verde desde (m²/animal)</label><input id="s-cobj" inputmode="decimal"></div>
+    <div><label for="s-cmin">Amarillo desde (m²/animal)</label><input id="s-cmin" inputmode="decimal"></div>
+  </div>
+  <div class="row" style="margin-top:8px"><button class="pri" id="s-savec" style="width:auto">Guardar medidas</button><span class="hint" id="s-cmsg"></span></div>
+  </div>
+</section>
+
 <section id="v-base" hidden>
   <h2>Lotes y operarios</h2>
   <h3>Lotes</h3>
@@ -214,7 +302,7 @@ nav button.on{color:var(--g2);box-shadow:inset 0 3px 0 var(--g2);border-radius:0
 
 </main>
 <nav>
-  <button data-t="cargar" class="on">Cargar</button><button data-t="rec">Resumen</button><button data-t="graf">Gráficos</button><button data-t="of">Oferta</button><button data-t="prod">Producción</button><button data-t="base">Lotes</button>
+  <button data-t="cargar" class="on">Cargar</button><button data-t="rec">Resumen</button><button data-t="graf">Gráficos</button><button data-t="of">Oferta</button><button data-t="prod">Producción</button><button data-t="com">Bienestar</button><button data-t="base">Lotes</button>
 </nav>
 <datalist id="dl-rodeos"></datalist><datalist id="dl-rec"></datalist>
 
@@ -237,6 +325,10 @@ const KEY='pastoreo.v1';
 let S={recs:{},lotes:[],ops:[],cfgUpd:0,pend:[],pendCfg:false,tasas:{},tasasUpd:0,pendTasas:false,ofertas:{},pendOf:[]};
 try{const raw=localStorage.getItem(KEY);if(raw)S=Object.assign(S,JSON.parse(raw))}catch(e){}
 S.tasas=S.tasas||{};S.ofertas=S.ofertas||{};S.pendOf=S.pendOf||[];
+S.comTipos=S.comTipos||[];const OBJ_DEF=[{rodeo:'1',min:0.5,obj:0.6},{rodeo:'2',min:0.5,obj:0.6},{rodeo:'4',min:0.5,obj:0.6},{rodeo:'Frescas',min:0.8,obj:0.9},{rodeo:'Preparto',min:0.8,obj:0.9},{rodeo:'Hospital',min:0.8,obj:0.9},{rodeo:'Otros',min:0.5,obj:0.6}];
+const CFG_DEF={densidad:350,volAmarillo:0.85,rodeos:OBJ_DEF,sombraM2:32.4,sombraObj:5,sombraMin:4,upd:0};
+S.comCfg=Object.assign({},CFG_DEF,S.comCfg||{});if(!Array.isArray(S.comCfg.rodeos)||!S.comCfg.rodeos.length)S.comCfg.rodeos=OBJ_DEF;
+S.somRegs=S.somRegs||{};S.pendSomRegs=S.pendSomRegs||[];S.comRegs=S.comRegs||{};S.pendCom=!!S.pendCom;S.pendComRegs=S.pendComRegs||[];
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const live=()=>Object.values(S.recs).filter(r=>!r.del);
 
@@ -255,7 +347,7 @@ let API={url:'',k:''};try{API=Object.assign(API,JSON.parse(localStorage.getItem(
 if(!API.url){API={...API_DEF}}
 try{const q=new URLSearchParams(location.search);if(q.get('u')&&q.get('k')){API={url:q.get('u'),k:q.get('k')};localStorage.setItem(KEY+'.api',JSON.stringify(API));history.replaceState(null,'',location.pathname)}}catch(e){}
 let online=navigator.onLine,syncing=false,lastSync=0,syncErr='';
-const npend=()=>S.pend.length+(S.pendCfg?1:0)+(S.pendTasas?1:0)+S.pendOf.length;
+const npend=()=>S.pend.length+(S.pendCfg?1:0)+(S.pendTasas?1:0)+S.pendOf.length+(S.pendCom?1:0)+S.pendComRegs.length+S.pendSomRegs.length;
 const status=()=>{const st=$('#st'),n=npend();st.classList.remove('warn');
   if(!API.url){st.textContent='Sin conexión a la planilla';st.classList.add('warn');return}
   if(!online){st.textContent=n?`Sin señal · ${n} por subir`:'Sin señal · datos guardados';st.classList.add('warn');return}
@@ -263,6 +355,9 @@ const status=()=>{const st=$('#st'),n=npend();st.classList.remove('warn');
   if(syncErr){st.textContent=n?`${syncErr} · ${n} por subir`:syncErr;st.classList.add('warn');return}
   st.textContent=n?`${n} por subir`:(lastSync?'Sincronizado '+new Date(lastSync).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}):'Conectado')};
 function applyServer(d,sent){
+  if(Array.isArray(d.comTipos)&&!S.pendCom){S.comTipos=d.comTipos;if(d.comCfg){S.comCfg=Object.assign({},CFG_DEF,d.comCfg);if(!Array.isArray(S.comCfg.rodeos)||!S.comCfg.rodeos.length)S.comCfg.rodeos=OBJ_DEF}}
+  if(Array.isArray(d.somRegs)){const sr={};d.somRegs.forEach(r=>{if(r&&r.id)sr[r.id]=r});S.pendSomRegs.forEach(id=>{if(S.somRegs[id])sr[id]=S.somRegs[id]});S.somRegs=sr}
+  if(Array.isArray(d.comRegs)){const cr={};d.comRegs.forEach(r=>{if(r&&r.id)cr[r.id]=r});S.pendComRegs.forEach(id=>{if(S.comRegs[id])cr[id]=S.comRegs[id]});S.comRegs=cr}
   const recs={};(d.registros||[]).forEach(r=>{if(r&&r.id)recs[r.id]=r});
   S.pend.forEach(id=>{if(S.recs[id])recs[id]=S.recs[id]});S.recs=recs;
   if(!S.pendCfg&&Array.isArray(d.lotes)){S.lotes=d.lotes;S.ops=Array.isArray(d.ops)?d.ops:S.ops}
@@ -270,15 +365,21 @@ function applyServer(d,sent){
   if(Array.isArray(d.ofertas)){const of={};d.ofertas.forEach(o=>{if(o&&o.fecha)of[o.fecha]=o});S.pendOf.forEach(f=>{if(S.ofertas[f])of[f]=S.ofertas[f]});S.ofertas=of}
   persist();renderAll()}
 async function sync(){if(!API.url||!navigator.onLine||syncing)return;online=true;syncing=true;syncErr='';status();
-  const sent={pend:[...S.pend],cfg:S.pendCfg,tasas:S.pendTasas,of:[...S.pendOf]};
+  const sent={pend:[...S.pend],cfg:S.pendCfg,tasas:S.pendTasas,of:[...S.pendOf],com:S.pendCom,cr:[...S.pendComRegs],sr:[...S.pendSomRegs]};
   try{let res;
     if(npend()){const body={k:API.k,registros:sent.pend.map(id=>S.recs[id]).filter(Boolean)};
       if(sent.cfg)body.base={lotes:S.lotes,ops:S.ops};if(sent.tasas)body.tasas={tasas:S.tasas,upd:S.tasasUpd};
       if(sent.of.length)body.ofertas=sent.of.map(f=>S.ofertas[f]).filter(Boolean);
+      if(sent.com){body.comTipos=S.comTipos;body.comCfg=S.comCfg}
+      if(sent.sr.length)body.somRegs=sent.sr.map(id=>S.somRegs[id]).filter(Boolean).map(r=>{const c=somCalc(r);return Object.assign({},r,{m2:+c.m2.toFixed(1),m2PorAnimal:c.mpa==null?null:+c.mpa.toFixed(2),estado:c.estado})});
+      if(sent.cr.length)body.comRegs=sent.cr.map(id=>S.comRegs[id]).filter(Boolean).map(r=>{const c=comCalc(r);return Object.assign({},r,{metros:+c.metros.toFixed(2),mPorAnimal:c.mpa==null?null:+c.mpa.toFixed(3),estado:c.estado,litrosRacion:c.lr==null?null:Math.round(c.lr),litrosCap:Math.round(c.cap),ocupacion:c.oc==null?null:+c.oc.toFixed(3),estadoVol:c.ev})});
       res=await fetch(API.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})}
     else res=await fetch(API.url+(API.url.includes('?')?'&':'?')+'k='+encodeURIComponent(API.k)+'&t='+Date.now());
     const d=await res.json();
     if(d.error){syncErr=d.error==='clave'?'Clave incorrecta':'Error de la planilla';throw 0}
+    if(Array.isArray(d.somRegs)&&sent.sr.length)S.pendSomRegs=S.pendSomRegs.filter(id=>!sent.sr.includes(id)||S.somRegs[id]?.upd>(d.somRegs.find(r=>r.id===id)||{}).upd);
+    if(Array.isArray(d.comTipos)&&sent.com)S.pendCom=false;
+    if(Array.isArray(d.comRegs)&&sent.cr.length)S.pendComRegs=S.pendComRegs.filter(id=>!sent.cr.includes(id)||S.comRegs[id]?.upd>(d.comRegs.find(r=>r.id===id)||{}).upd);
     if(sent.pend.length||sent.cfg||sent.tasas||sent.of.length){
       S.pend=S.pend.filter(id=>!sent.pend.includes(id)||S.recs[id]?.upd>(d.registros||[]).find(r=>r.id===id)?.upd);
       if(sent.cfg&&S.pendCfg===sent.cfg)S.pendCfg=false;if(sent.tasas)S.pendTasas=false;S.pendOf=S.pendOf.filter(f=>!sent.of.includes(f))}
@@ -295,8 +396,8 @@ setTimeout(sync,300);
 let tab='cargar';
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
 function show(t){tab=t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
-  ['cargar','rec','graf','of','prod','base'].forEach(x=>$('#v-'+x).hidden=x!==t);scrollTo(0,0);
-  if(t==='rec')renderRec();if(t==='graf')renderGraf();if(t==='of')renderOf();if(t==='prod')renderProd();if(t==='base')renderBase()}
+  ['cargar','rec','graf','of','prod','com','base'].forEach(x=>$('#v-'+x).hidden=x!==t);scrollTo(0,0);
+  if(t==='rec')renderRec();if(t==='graf')renderGraf();if(t==='of')renderOf();if(t==='prod')renderProd();if(t==='com')renderCom();if(t==='base')renderBase()}
 
 /* ---------- formulario ---------- */
 let turno='Mañana',editing=null,largoTouched=false;
@@ -546,7 +647,115 @@ $('#c-link').onclick=async()=>{if(!API.url){$('#c-msg').textContent='Primero car
   try{await navigator.clipboard.writeText(l);$('#c-msg').textContent='Link copiado ✓'}catch(e){$('#c-msg').textContent=l}};
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 
-function renderAll(){fillSelects();renderForm();if(tab==='rec')renderRec();if(tab==='graf')renderGraf();if(tab==='of')renderOf();if(tab==='prod')renderProd();if(tab==='base')renderBase()}
+/* ---------- comederos ---------- */
+let kEdit=null,kCant={},dT=null,dTdirty=false;
+const normR=x=>String(x??'').trim().toLowerCase();
+const objFor=rod=>{const L=S.comCfg.rodeos||OBJ_DEF;return L.find(o=>normR(o.rodeo)===normR(rod))||L.find(o=>normR(o.rodeo)==='otros')||{min:0.5,obj:0.6}};
+const somCalc=r=>{const m2=(r.cant||0)*(r.m2u??S.comCfg.sombraM2??32.4);const mpa=r.animales?m2/r.animales:null;const o=S.comCfg.sombraObj||5,mn=S.comCfg.sombraMin||4;
+  const estado=mpa==null||!r.cant?'':mpa>=o?'verde':mpa>=mn?'amarillo':'rojo';const falta=r.animales?Math.max(0,o*r.animales-m2):0;const u=r.m2u??S.comCfg.sombraM2??32.4;
+  return{m2,mpa,estado,falta,faltanU:Math.ceil(falta/u-1e-9),cubre:Math.floor(m2/o+1e-9)}};
+const liveSom=()=>Object.values(S.somRegs).filter(r=>!r.del);
+const comCalc=r=>{const m=(r.items||[]).reduce((a,it)=>{const t=S.comTipos.find(x=>x.id===it.tipo);const mt=it.metros??t?.metros;return a+(it.cant||0)*(mt||0)},0);
+  const mpa=r.animales?m/r.animales:null;const ob=objFor(r.rodeo),o=ob.obj;
+  const estado=mpa==null||!m?'':mpa>=ob.obj?'verde':mpa>=ob.min?'amarillo':'rojo';
+  const cap=(r.items||[]).reduce((a,it)=>{const t=S.comTipos.find(x=>x.id===it.tipo);const l=it.litros??t?.litros;return a+(it.cant||0)*(l||0)},0);
+  const dens=r.densidad||S.comCfg.densidad||350;const lr=r.kg?r.kg/dens*1000:null;const oc=lr!=null&&cap?lr/cap:null;const va=S.comCfg.volAmarillo||0.85;
+  const ev=oc==null?'':oc<=va?'verde':oc<=1?'amarillo':'rojo';
+  return{metros:m,mpa,estado,falta:r.animales?Math.max(0,o*r.animales-m):0,cap,lr,oc,ev,faltaL:lr!=null?Math.max(0,lr-cap):0,desc:lr&&cap?Math.ceil(lr/cap):null}};
+const peor=(a,b)=>{const o={rojo:3,amarillo:2,verde:1,'':0};return (o[a]||0)>=(o[b]||0)?a:b};
+const liveCom=()=>Object.values(S.comRegs).filter(r=>!r.del);
+const lastVacas=rod=>{const r=live().filter(x=>x.rodeo===rod).sort((a,b)=>a.fecha<b.fecha?1:-1)[0];return r?{v:r.vacas,f:r.fecha}:null};
+const EST={verde:'OK',amarillo:'Justo',rojo:'Falta'};
+const dotS=e=>`<span class="luz ${e||'gris'}" style="display:inline-block;width:12px;height:12px;vertical-align:-1px;margin-right:4px;box-shadow:none"></span>`;
+function renderCom(){if(!$('#k-fecha').value)$('#k-fecha').value=today();
+  if(!dT||!dTdirty){dT=S.comTipos.map(t=>({...t}));dTdirty=false;dOb=(S.comCfg.rodeos||OBJ_DEF).map(o=>({...o}));$('#k-cdens').value=S.comCfg.densidad||350;$('#k-cva').value=Math.round((S.comCfg.volAmarillo||0.85)*100)}
+  if(!$('#k-dens').value)$('#k-dens').value=S.comCfg.densidad||350;
+  drawTipos();drawObjs();drawItems();kForm();renderSom();
+  const rods=[...new Set([...liveCom().map(r=>r.rodeo),...liveSom().map(r=>r.rodeo),...live().map(r=>r.rodeo)])].sort(sortNat);
+  $('#k-sem').innerHTML=rods.length?'<div class="sem">'+rods.map(rod=>{const r=liveCom().filter(x=>x.rodeo===rod).sort((a,b)=>a.fecha<b.fecha?1:a.fecha>b.fecha?-1:(b.upd||0)-(a.upd||0))[0];
+    const sr=liveSom().filter(x=>x.rodeo===rod).sort((a,b)=>a.fecha<b.fecha?1:a.fecha>b.fecha?-1:(b.upd||0)-(a.upd||0))[0];const sc=sr?somCalc(sr):null;
+    const sLine=sc?`<small>${dotS(sc.estado)}Sombra ${f1(sc.mpa,1)} m²/animal${sc.estado&&sc.estado!=='verde'?` · faltan ${sc.faltanU} media${sc.faltanU>1?'s':''} sombra${sc.faltanU>1?'s':''}`:''}</small>`:`<small>${dotS('')}Sombra sin datos</small>`;
+    if(!r)return `<div class="semc"><span class="luz ${sc?.estado||'gris'}"></span><b>Rodeo ${esc(rod)}</b><small>${dotS('')}Comederos sin datos</small>${sLine}</div>`;
+    const c=comCalc(r);const lv=lastVacas(rod);const anim=r.animales;
+    const g=peor(peor(c.estado,c.ev),sc?.estado||'');const dot=e=>`<span class="luz ${e||'gris'}" style="display:inline-block;width:12px;height:12px;vertical-align:-1px;margin-right:4px;box-shadow:none"></span>`;
+    return `<div class="semc"><span class="luz ${g||'gris'}"></span><b>Rodeo ${esc(rod)}</b><small>${dot(c.estado)}Frente ${f1(c.mpa,2)} m/animal${c.estado&&c.estado!=='verde'?` · faltan ${f1(c.falta)} m`:''}</small><small>${dot(c.ev)}${c.oc!=null?`Volumen ${pct(c.oc)} ocupado${c.ev==='rojo'?` · no entra en 1 descarga`:''}`:'Volumen sin datos'}</small>${sLine}<small>${esc(dlabel(r.fecha))} · ${f0(anim)} animales${lv&&lv.v!==anim?` (pastoreo ${esc(dlabel(lv.f))}: ${f0(lv.v)})`:''}</small></div>`}).join('')+'</div>':'';
+  const h=liveCom().sort((a,b)=>a.fecha<b.fecha?1:-1).slice(0,15);
+  $('#k-hist').innerHTML=h.length?h.map(r=>{const c=comCalc(r);return `<div class="prc"><div class="prc1"><span><span class="luz ${peor(c.estado,c.ev)||'gris'}" style="display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:6px"></span>${esc(dlabel(r.fecha))} · Rodeo ${esc(r.rodeo)}</span><b>${f1(c.mpa,2)} <small>m/animal</small>${c.oc!=null?` · ${pct(c.oc)} <small>vol.</small>`:''}</b></div>
+    <div class="prc2"><span>${f1(c.metros)} m · ${f0(r.animales)} animales${r.kg?` · ${f0(r.kg)} kg/descarga`:''} · ${(r.items||[]).filter(i=>i.cant).map(i=>esc((S.comTipos.find(t=>t.id===i.tipo)?.nombre||i.nombre||'?'))+' × '+i.cant).join(', ')}</span><span><button class="sm" data-ked="${esc(r.id)}">Editar</button> <button class="sm danger" data-kdel="${esc(r.id)}">${armed===r.id?'¿Borrar?':'Borrar'}</button></span></div></div>`}).join(''):'<p class="empty">Todavía no hay cargas de comederos.</p>'}
+function drawItems(){$('#k-items').innerHTML=S.comTipos.length?'<label>Cantidad de comederos de cada tipo</label>'+S.comTipos.map(t=>`<div class="step"><span>${esc(t.nombre)} <small class="hint">(${f1(t.metros,1)} m${t.litros?' · '+f0(t.litros)+' L':''})</small></span><button type="button" data-kmenos="${esc(t.id)}" aria-label="Uno menos">−</button><input data-kc="${esc(t.id)}" inputmode="numeric" value="${kCant[t.id]||0}" aria-label="Cantidad de ${esc(t.nombre)}"><button type="button" data-kmas="${esc(t.id)}" aria-label="Uno más">+</button></div>`).join(''):'<p class="empty">Primero cargá los tipos de comedero (más abajo) con sus metros.</p>'}
+const kRec=()=>({fecha:$('#k-fecha').value,rodeo:$('#k-rodeo').value.trim(),animales:num($('#k-anim').value),kg:num($('#k-kg').value),densidad:num($('#k-dens').value),items:S.comTipos.map(t=>({tipo:t.id,nombre:t.nombre,metros:t.metros,litros:t.litros??null,cant:kCant[t.id]||0}))});
+function kForm(){const r=kRec(),c=comCalc(r);$('#k-mpa').textContent=c.mpa!=null&&c.metros?f1(c.mpa,2):'—';$('#k-m').textContent=c.metros?f1(c.metros):'—';
+  $('#k-est').textContent=EST[c.estado]||'—';$('#k-res').style.background=c.estado==='rojo'?'#a3302c':c.estado==='amarillo'?'#9a7a10':'';
+  {const ob=objFor(r.rodeo);$('#k-estl').textContent=(c.estado&&c.estado!=='verde'?`faltan ${f1(c.falta)} m · `:'')+`verde ${f1(ob.obj,2)} / amarillo ${f1(ob.min,2)} m por animal`}
+  $('#k-oc').textContent=c.oc!=null?pct(c.oc):'—';$('#k-lr').textContent=c.lr!=null?f0(c.lr):'—';$('#k-estv').textContent=c.ev==='rojo'?'No entra':c.ev==='amarillo'?'Justo':c.ev==='verde'?'Entra':'—';
+  $('#k-resv').style.background=c.ev==='rojo'?'#a3302c':c.ev==='amarillo'?'#9a7a10':'';
+  $('#k-estvl').textContent=!c.cap?(S.comTipos.some(t=>t.litros)?'elegí los comederos':'cargá los litros de cada tipo (abajo)'):c.lr==null?`capacidad ${f0(c.cap)} L · cargá los kg`:c.ev==='rojo'?`capacidad ${f0(c.cap)} L · faltan ${f0(c.faltaL)} L · hacen falta ${c.desc} descargas`:`capacidad ${f0(c.cap)} L`+(r.kg&&r.animales?` · ${f1(r.kg/r.animales)} kg/animal`:'');
+  const lv=r.rodeo?lastVacas(r.rodeo):null;$('#k-animh').textContent=lv?`Último pastoreo cargado (${dlabel(lv.f)}): ${lv.v} animales`:''}
+$('#k-rodeo').addEventListener('change',()=>{const lv=lastVacas($('#k-rodeo').value.trim());if(lv&&!$('#k-anim').value)$('#k-anim').value=lv.v;kForm()});
+['k-fecha','k-rodeo','k-anim','k-kg','k-dens'].forEach(id=>$('#'+id).addEventListener('input',kForm));
+['k-bl','k-bkg'].forEach(id=>$('#'+id).addEventListener('input',()=>{const l=num($('#k-bl').value),k=num($('#k-bkg').value);if(l&&k){const d=Math.round(k/l*1000);$('#k-bres').textContent=`Densidad: ${f0(d)} kg/m³ (ya la puse arriba)`;$('#k-dens').value=d;kForm()}}));
+$('#k-items').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const id=b.dataset.kmas||b.dataset.kmenos;if(!id)return;kCant[id]=Math.max(0,(kCant[id]||0)+(b.dataset.kmas?1:-1));$(`[data-kc="${CSS.escape(id)}"]`).value=kCant[id];kForm()});
+$('#k-items').addEventListener('input',e=>{const id=e.target.dataset.kc;if(id){kCant[id]=Math.max(0,Math.round(num(e.target.value)||0));kForm()}});
+$('#k-save').onclick=()=>{const r=kRec();const miss=[];if(!r.fecha)miss.push('fecha');if(!r.rodeo)miss.push('rodeo');if(!r.animales)miss.push('animales');if(!r.items.some(i=>i.cant))miss.push('al menos un comedero');if(r.kg!=null&&!r.densidad)miss.push('densidad');
+  if(miss.length){$('#k-estl').textContent='Falta: '+miss.join(', ');return}
+  const id=kEdit||uid();S.comRegs[id]=Object.assign(r,{id,upd:Date.now(),del:false});if(!S.pendComRegs.includes(id))S.pendComRegs.push(id);persist();
+  kEdit=null;kCant={};$('#k-rodeo').value='';$('#k-anim').value='';$('#k-kg').value='';$('#k-cancel').hidden=true;$('#k-ftit').textContent='Cargar comederos de un rodeo';
+  $('#k-save').textContent='Guardado ✓';setTimeout(()=>$('#k-save').textContent='Guardar',1500);renderCom();flush()};
+$('#k-cancel').onclick=()=>{kEdit=null;kCant={};$('#k-rodeo').value='';$('#k-anim').value='';$('#k-kg').value='';$('#k-cancel').hidden=true;$('#k-ftit').textContent='Cargar comederos de un rodeo';renderCom()};
+$('#k-hist').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.ked){const r=S.comRegs[b.dataset.ked];if(!r)return;kEdit=r.id;kCant={};(r.items||[]).forEach(i=>kCant[i.tipo]=i.cant);$('#k-fecha').value=r.fecha;$('#k-rodeo').value=r.rodeo;$('#k-anim').value=r.animales;$('#k-kg').value=r.kg??'';$('#k-dens').value=r.densidad||S.comCfg.densidad||350;
+    $('#k-cancel').hidden=false;$('#k-ftit').textContent='Editar carga de comederos';renderCom();$('#k-ftit').scrollIntoView({behavior:'smooth'})}
+  if(b.dataset.kdel){const id=b.dataset.kdel;if(armed!==id){armed=id;renderCom();return}armed=null;const r=S.comRegs[id];if(r){r.del=true;r.upd=Date.now();if(!S.pendComRegs.includes(id))S.pendComRegs.push(id);persist();flush()}renderCom()}});
+function drawTipos(){$('#k-tipos').innerHTML=dT.length?dT.map((t,i)=>`<div class="trow"><input data-ti="${i}" data-k="nombre" value="${esc(t.nombre)}" aria-label="Tipo"><input data-ti="${i}" data-k="metros" inputmode="decimal" value="${esc(t.metros==null?'':String(t.metros).replace('.',','))}" aria-label="Metros"><input data-ti="${i}" data-k="litros" inputmode="decimal" value="${esc(t.litros==null?'':String(t.litros).replace('.',','))}" aria-label="Litros"><button class="x" data-trm="${i}" aria-label="Quitar tipo">×</button></div>`).join(''):'<p class="empty">Sin tipos cargados. Ej: comedero de hormigón 6 m, batea plástica 3 m.</p>'}
+$('#k-tipos').addEventListener('input',e=>{const t=e.target;if(t.dataset.ti==null)return;dT[+t.dataset.ti][t.dataset.k]=t.dataset.k==='nombre'?t.value:num(t.value);dTdirty=true;$('#k-tmsg').textContent='Cambios sin guardar'});
+$('#k-tipos').addEventListener('click',e=>{const b=e.target.closest('[data-trm]');if(!b)return;dT.splice(+b.dataset.trm,1);dTdirty=true;drawTipos();$('#k-tmsg').textContent='Cambios sin guardar'});
+
+$('#k-addt').onclick=()=>{dT.push({id:uid(),nombre:'',metros:null});dTdirty=true;drawTipos();$('#k-tipos').lastElementChild.querySelector('input').focus()};
+['k-cdens','k-cva'].forEach(id=>$('#'+id).addEventListener('input',()=>{dTdirty=true;$('#k-tmsg').textContent='Cambios sin guardar'}));
+$('#k-savet').onclick=()=>{S.comTipos=dT.filter(t=>String(t.nombre).trim()).map(t=>({id:t.id||uid(),nombre:String(t.nombre).trim(),metros:t.metros,litros:t.litros??null}));
+  S.comCfg=Object.assign({},S.comCfg,{rodeos:dOb.filter(o=>String(o.rodeo).trim()&&o.obj).map(o=>({rodeo:String(o.rodeo).trim(),min:o.min??o.obj,obj:o.obj})),densidad:num($('#k-cdens').value)||350,volAmarillo:Math.min(1,Math.max(0.1,(num($('#k-cva').value)||85)/100)),upd:Date.now()});
+  S.pendCom=true;dTdirty=false;persist();if(!kEdit)$('#k-dens').value=S.comCfg.densidad;$('#k-tmsg').textContent='Guardado ✓';renderCom();flush()};
+
+/* objetivos por rodeo */
+let dOb=null;
+function drawObjs(){const c=v=>v==null?'':String(v).replace('.',',');
+  $('#k-objs').innerHTML=dOb.map((o,i)=>`<div class="trow" style="grid-template-columns:minmax(0,1.4fr) 80px 80px 34px"><input data-oi="${i}" data-k="rodeo" value="${esc(o.rodeo)}" aria-label="Rodeo"${normR(o.rodeo)==='otros'?' readonly':''}><input data-oi="${i}" data-k="min" inputmode="decimal" value="${esc(c(o.min))}" aria-label="Amarillo desde"><input data-oi="${i}" data-k="obj" inputmode="decimal" value="${esc(c(o.obj))}" aria-label="Verde desde">${normR(o.rodeo)==='otros'?'<span></span>':`<button class="x" data-orm="${i}" aria-label="Quitar">×</button>`}</div>`).join('')}
+$('#k-objs').addEventListener('input',e=>{const t=e.target;if(t.dataset.oi==null)return;dOb[+t.dataset.oi][t.dataset.k]=t.dataset.k==='rodeo'?t.value:num(t.value);dTdirty=true;$('#k-tmsg').textContent='Cambios sin guardar'});
+$('#k-objs').addEventListener('click',e=>{const b=e.target.closest('[data-orm]');if(!b)return;dOb.splice(+b.dataset.orm,1);dTdirty=true;drawObjs();$('#k-tmsg').textContent='Cambios sin guardar'});
+$('#k-addo').onclick=()=>{dOb.splice(dOb.length-1,0,{rodeo:'',min:0.5,obj:0.6});dTdirty=true;drawObjs();$('#k-objs').children[dOb.length-2].querySelector('input').focus()};
+/* modo comederos / media sombra */
+let kModo='com';
+document.querySelectorAll('#k-modo button').forEach(b=>b.onclick=()=>{kModo=b.dataset.v;document.querySelectorAll('#k-modo button').forEach(x=>x.classList.toggle('on',x===b));$('#pane-com').hidden=kModo!=='com';$('#pane-som').hidden=kModo!=='som'});
+/* media sombra */
+let sEdit=null,sDirty=false;
+const sRec=()=>({fecha:$('#s-fecha').value,rodeo:$('#s-rodeo').value.trim(),animales:num($('#s-anim').value),cant:Math.max(0,Math.round(num($('#s-cant').value)||0)),m2u:S.comCfg.sombraM2||32.4});
+function sForm(){const r=sRec(),c=somCalc(r);$('#s-mpa').textContent=c.mpa!=null&&r.cant?f1(c.mpa,1):'—';$('#s-m').textContent=r.cant?f1(c.m2,1):'—';
+  $('#s-est').textContent=EST[c.estado]||'—';$('#s-res').style.background=c.estado==='rojo'?'#a3302c':c.estado==='amarillo'?'#9a7a10':'';
+  $('#s-estl').textContent=(c.estado&&c.estado!=='verde'?`faltan ${f1(c.falta,1)} m² · ${c.faltanU} media${c.faltanU>1?'s':''} sombra${c.faltanU>1?'s':''} más · `:'')+(r.cant?`alcanza para ${c.cubre} animales`:`verde ${f1(S.comCfg.sombraObj,1)} m²/animal`);
+  const lv=r.rodeo?lastVacas(r.rodeo):null;$('#s-animh').textContent=lv?`Último pastoreo cargado (${dlabel(lv.f)}): ${lv.v} animales`:''}
+function renderSom(){if(!$('#s-fecha').value)$('#s-fecha').value=today();
+  if(!sDirty){$('#s-cm2').value=String(S.comCfg.sombraM2??32.4).replace('.',',');$('#s-cobj').value=String(S.comCfg.sombraObj??5).replace('.',',');$('#s-cmin').value=String(S.comCfg.sombraMin??4).replace('.',',')}
+  sForm();const h=liveSom().sort((a,b)=>a.fecha<b.fecha?1:-1).slice(0,15);
+  $('#s-hist').innerHTML=h.length?h.map(r=>{const c=somCalc(r);return `<div class="prc"><div class="prc1"><span>${dotS(c.estado)}${esc(dlabel(r.fecha))} · Rodeo ${esc(r.rodeo)}</span><b>${f1(c.mpa,1)} <small>m²/animal</small></b></div>
+    <div class="prc2"><span>${r.cant} medias sombras · ${f1(c.m2,1)} m² · ${f0(r.animales)} animales</span><span><button class="sm" data-sed="${esc(r.id)}">Editar</button> <button class="sm danger" data-sdel="${esc(r.id)}">${armed===r.id?'¿Borrar?':'Borrar'}</button></span></div></div>`}).join(''):'<p class="empty">Todavía no hay cargas de media sombra.</p>'}
+['s-fecha','s-rodeo','s-anim','s-cant'].forEach(id=>$('#'+id).addEventListener('input',sForm));
+$('#s-rodeo').addEventListener('change',()=>{const lv=lastVacas($('#s-rodeo').value.trim());if(lv&&!$('#s-anim').value)$('#s-anim').value=lv.v;sForm()});
+$('#s-mas').onclick=()=>{$('#s-cant').value=(Math.round(num($('#s-cant').value)||0))+1;sForm()};
+$('#s-menos').onclick=()=>{$('#s-cant').value=Math.max(0,(Math.round(num($('#s-cant').value)||0))-1);sForm()};
+const sClear=()=>{sEdit=null;$('#s-rodeo').value='';$('#s-anim').value='';$('#s-cant').value=0;$('#s-cancel').hidden=true;$('#s-ftit').textContent='Cargar media sombra de un rodeo'};
+$('#s-save').onclick=()=>{const r=sRec();const miss=[];if(!r.fecha)miss.push('fecha');if(!r.rodeo)miss.push('rodeo');if(!r.animales)miss.push('animales');if(!r.cant)miss.push('cantidad de medias sombras');
+  if(miss.length){$('#s-estl').textContent='Falta: '+miss.join(', ');return}
+  const id=sEdit||uid();S.somRegs[id]=Object.assign(r,{id,upd:Date.now(),del:false});if(!S.pendSomRegs.includes(id))S.pendSomRegs.push(id);persist();sClear();
+  $('#s-save').textContent='Guardado ✓';setTimeout(()=>$('#s-save').textContent='Guardar',1500);renderCom();flush()};
+$('#s-cancel').onclick=()=>{sClear();renderCom()};
+$('#s-hist').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.sed){const r=S.somRegs[b.dataset.sed];if(!r)return;sEdit=r.id;$('#s-fecha').value=r.fecha;$('#s-rodeo').value=r.rodeo;$('#s-anim').value=r.animales;$('#s-cant').value=r.cant;$('#s-cancel').hidden=false;$('#s-ftit').textContent='Editar carga de media sombra';sForm();$('#s-ftit').scrollIntoView({behavior:'smooth'})}
+  if(b.dataset.sdel){const id=b.dataset.sdel;if(armed!==id){armed=id;renderCom();return}armed=null;const r=S.somRegs[id];if(r){r.del=true;r.upd=Date.now();if(!S.pendSomRegs.includes(id))S.pendSomRegs.push(id);persist();flush()}renderCom()}});
+['s-cm2','s-cobj','s-cmin'].forEach(id=>$('#'+id).addEventListener('input',()=>{sDirty=true;$('#s-cmsg').textContent='Cambios sin guardar'}));
+$('#s-savec').onclick=()=>{const m2=num($('#s-cm2').value)||32.4,o=num($('#s-cobj').value)||5;let mn=num($('#s-cmin').value)||4;if(mn>o)mn=o;
+  S.comCfg=Object.assign({},S.comCfg,{sombraM2:m2,sombraObj:o,sombraMin:mn,upd:Date.now()});S.pendCom=true;sDirty=false;persist();$('#s-cmsg').textContent='Guardado ✓';renderCom();flush()};
+
+function renderAll(){fillSelects();renderForm();if(tab==='rec')renderRec();if(tab==='graf')renderGraf();if(tab==='of')renderOf();if(tab==='prod')renderProd();if(tab==='com')renderCom();if(tab==='base')renderBase()}
 renderAll();status();
 }
 </script>

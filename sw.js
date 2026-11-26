@@ -1,6 +1,6 @@
 // Pastoreo Tubicha Mini — funciona sin señal.
 // Al publicar una versión nueva de la app, cambiá el número de VERSION.
-const VERSION = 'pastoreo-v1';
+const VERSION = 'pastoreo-v4';
 const ARCHIVOS = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
